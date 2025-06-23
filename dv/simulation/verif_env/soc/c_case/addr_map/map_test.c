@@ -201,15 +201,6 @@ long int read_data =0;
 	sim_fail();
 	}
 
-//cal_crc
-  flag_data = 0x00000001;
-  mem_write32_(0x50004000, flag_data);
-  mem_read32_(0x50004000, &read_data);
-
-	if(read_data != flag_data){
-	sim_fail();
-	}
-
 
 printf("All IP write/read test Pass!\n");
 
@@ -294,6 +285,12 @@ printf("All IP write/read test Pass!\n");
 
 
 //APB0 BUS DUMMY
+   flag_data = 0x22;
+   mem_read32_(0x50004000, &read_data);
+
+	if(read_data != flag_data){
+	sim_fail();
+	}
 
    flag_data = 0x23;
   mem_read32_(0x5000c000, &read_data);
