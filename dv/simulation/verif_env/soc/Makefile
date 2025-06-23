@@ -9,6 +9,9 @@ all_vip_dpi: comp_vip run_vip_dpi
 ccomp:
 	./script/make_hex $(c_test)
 
+vipccomp:
+	./script/make_hex_for_vip $(c_test)
+
 comp:
 	vcs -debug_access -full64 -sverilog -kdb \
 		-l comp.log \
@@ -34,12 +37,12 @@ run: ccomp
 run_vip:
 	./simv -l simv.log +UVM_TESTNAME=soc_top_smoke_test
 
-run_vip_dpi:
-	./simv -l simv.log +UVM_TESTNAME=soc_top_smoke_test -sv_lib test_start
+run_vip_dpi: vipccomp
+	./simv -l simv.log +UVM_TESTNAME=soc_top_vip_run_with_c_test -sv_lib test_start
 
 clean:
 	rm -rf verdi* comp.log simv* vc_hdrs.h csrc out hierarchy.txt ucli* tr_db.log *xml *log *fsdb novas*
-	rm -rf core.* *.c_code test.pat
+	rm -rf core.* *.c_code test.pat *.so
 
 clean_all: clean
 	rm -rf env filelist model  reg_model  sequences  tb_top  tests  uvc soc_top common

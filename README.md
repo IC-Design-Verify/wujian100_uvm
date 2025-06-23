@@ -23,7 +23,7 @@
 	make all
 ### VIP驱动的仿真：可以编译仿真，已实现smoke用例跑timer的功能
 	make all_vip
-### VIP驱动的仿真（DPI调用CPU的C case）：可以编译，还未实现将C编译成.so的功能，无法仿真
+### VIP驱动的仿真（DPI调用CPU的C case）：可以编译仿真，默认仿真timer/timer_test.c用例
 	make all_vip_dpi
 
 # 微信公众号
