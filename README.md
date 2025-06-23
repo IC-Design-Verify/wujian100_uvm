@@ -4,4 +4,4 @@
 
 # 微信公众号
 相关环境介绍可以扫码关注我的微信公众号查看（带SVT VIP的UVM验证环境介绍）。
-<img src="https://github.com/IC-Design-Verify/wujian100_uvm/blob/main/images/wxgzh.jpg" width="1170" height="1164" alt="wxgzh" align=center/>
+<img src="https://github.com/IC-Design-Verify/wujian100_uvm/blob/main/images/wxgzh.jpg" width="485" height="640" alt="wxgzh" align=center/>
