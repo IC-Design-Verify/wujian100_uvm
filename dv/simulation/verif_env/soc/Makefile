@@ -1,8 +1,13 @@
 export LIGHT_ROOT := $(shell pwd)
 
+c_test = timer/timer_test.c
+
 all: comp run
 all_vip: comp_vip run_vip
 all_vip_dpi: comp_vip run_vip_dpi
+
+ccomp:
+	./script/make_hex $(c_test)
 
 comp:
 	vcs -debug_access -full64 -sverilog -kdb \
@@ -23,8 +28,8 @@ comp_vip:
 		-f ./soc_top/filelist/rtl.f \
 		-top tb_top
 
-run:
-	./simv -l simv.log +UVM_TESTNAME=soc_top_smoke_test
+run: ccomp
+	./simv -l simv.log +UVM_TESTNAME=soc_top_for_c_case_test
 
 run_vip:
 	./simv -l simv.log +UVM_TESTNAME=soc_top_smoke_test
@@ -34,7 +39,7 @@ run_vip_dpi:
 
 clean:
 	rm -rf verdi* comp.log simv* vc_hdrs.h csrc out hierarchy.txt ucli* tr_db.log *xml *log *fsdb novas*
-	rm -rf core.*
+	rm -rf core.* *.c_code test.pat
 
 clean_all: clean
 	rm -rf env filelist model  reg_model  sequences  tb_top  tests  uvc soc_top common

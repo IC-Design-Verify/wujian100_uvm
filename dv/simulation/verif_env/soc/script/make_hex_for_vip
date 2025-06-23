@@ -1,0 +1,66 @@
+#!/bin/env perl
+
+use strict;
+use warnings FATAL => 'all';
+use Term::ANSIColor qw(:constants);
+use Getopt::Long;
+    $Getopt::Long::ignorecase = 0;
+use File::Copy;
+use Cwd;
+use FileHandle;
+use File::Basename;
+no strict 'refs';
+my $pwd = `pwd`;
+
+my $path;
+my $case;
+my $case_file;
+my $case_make;
+my $had_v;
+my @file;
+foreach(@ARGV){
+	if(/(.*\/)(.*)/){
+		$case_file = $_;
+		$path = "$ENV{PROJ_HOME}/dv/simulation/verif_env/soc/c_case/" . $1;
+		$case = $2;
+	}else{
+		$case_file = $_;
+		$case = $_;
+		chomp($path = `pwd`);
+	}
+  
+  print "case_file: $case_file\n";
+  print "path     : $path\n";
+  print "case     : $case\n";
+
+  my $output = $case . '_code';
+  system "rm -rf $output" if -e $output;
+  mkdir $output;
+  chdir $output;
+	if($case =~ /(.*)\.s/){
+		$case_make = $1;
+		!system("cp $case_file .") or die "can't copy $case_file";
+	}
+
+	if($case =~ /(.*)\.c/){
+		$case_make = $1;
+		chomp(@file = `ls $path`);
+		foreach(@file){
+			if(/CVS/){
+				undef $_;
+			}else{
+				my $file = "$path"."\/"."$_";
+				print "$file\n";
+        if($file =~ /\.c/) {
+  				!system("cp $file .") or die "can't copy $file";
+        }
+			}
+		}
+	}
+}
+
+!system("gcc -Wall -DFOR_VIP_RUN -m64 -g -fPIC -shared -o test_start.so *.c") or die "can't make";
+!system("cp test_start.so ..") or die "cant't copy";
+system("rm -rf *");
+
+chdir($pwd);

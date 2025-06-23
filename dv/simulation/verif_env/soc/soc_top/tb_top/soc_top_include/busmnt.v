@@ -73,7 +73,7 @@ bit[31:0]                                       c_sim_result;
 
 initial begin
   evt_pool = uvm_object_string_pool #(uvm_event#(bit[31:0]))::get_global_pool();
-  e902_c_finish_e = evt_pool.get("e902_c_finish_e");
+  e902_c_finish_e = evt_pool.get("cpu_c_finish_e");
 end
 always @(posedge sysclk or negedge sysrst_b)
 begin  

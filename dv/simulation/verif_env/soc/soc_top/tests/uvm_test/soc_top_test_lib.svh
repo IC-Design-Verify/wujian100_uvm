@@ -101,47 +101,23 @@ task soc_top_for_c_case_test::run_phase(uvm_phase phase);
   phase.raise_objection(this);
   evt_pool = uvm_object_string_pool #(uvm_event#(bit[31:0]))::get_global_pool();
   cpu_c_finish_e = evt_pool.get("cpu_c_finish_e");
-  fork
-    begin
-      forever begin
-        cpu_c_finish_e.wait_ptrigger_data(c_sim_result);
-        if(c_sim_result==32'h1001) begin
-          $display("***************************************\n");
-          $display("*              Test Fail              *\n");
-          $display("***************************************\n");
-          `uvm_error("UVM_TEST_FAILED", "C case test fail")
-          $display("WUJIAN TEST END\n");
-          break;
-        end
-        else if(c_sim_result==32'h2002) begin
-          $display("***************************************\n");
-          $display("*              Test Pass              *\n");
-          $display("***************************************\n");
-          `uvm_info("UVM_TEST_PASS", "UVM_TEST_PASS", UVM_LOW)
-          $display("WUJIAN TEST END\n");
-          break;
-        end
-        else if(c_sim_result==32'h3003) begin
-          `uvm_info("UVM_TEST_SAVED", "UVM_TEST_SAVED", UVM_LOW)
-          if($test$plusargs("save")) begin
-            $save("SAVE");
-            `uvm_info(get_type_name(), "Saving snapshot ...", UVM_NONE)
-          end
-          else begin
-            `uvm_info(get_type_name(), "Skipping snapshot saving...", UVM_NONE)
-          end
-          #1;
-
-          if($test$plusargs("save")) begin
-            break;
-          end
-          else if($test$plusargs("restore")) begin
-            break;
-          end
-        end
-      end
+  begin
+    cpu_c_finish_e.wait_ptrigger_data(c_sim_result);
+    if(c_sim_result==32'h1001) begin
+      $display("***************************************\n");
+      $display("*              Test Fail              *\n");
+      $display("***************************************\n");
+      `uvm_error("UVM_TEST_FAILED", "C case test fail")
+      $display("WUJIAN TEST END\n");
     end
-  join
+    else if(c_sim_result==32'h2002) begin
+      $display("***************************************\n");
+      $display("*              Test Pass              *\n");
+      $display("***************************************\n");
+      `uvm_info("UVM_TEST_PASS", "UVM_TEST_PASS", UVM_LOW)
+      $display("WUJIAN TEST END\n");
+    end
+  end
   phase.drop_objection(this);
 endtask
 
