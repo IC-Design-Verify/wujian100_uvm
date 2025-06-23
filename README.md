@@ -12,8 +12,13 @@
 	source dv.cshrc
 	# 进入soc环境目录
 	cd simulation/verif_env/soc
-	# 仿真
-	make
+## 仿真
+### CPU驱动的仿真：可以编译仿真，但是目前还未实现
+	make all
+### VIP驱动的仿真：可以编译仿真，已实现smoke用例跑timer的功能
+	make all_vip
+### VIP驱动的仿真（DPI调用CPU的C case）：可以编译，还未实现将C编译成.so的功能，无法仿真
+	make all_vip_dpi
 
 # 微信公众号
 相关环境介绍可以扫码关注我的微信公众号查看（带SVT VIP的UVM验证环境介绍）。
