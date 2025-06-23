@@ -4,6 +4,7 @@ package soc_top_env_pkg;
   import uvm_pkg::*;
 
   //agent package
+  import ahb_pkg::*;
 
   
 

@@ -1,7 +1,7 @@
 `ifndef SOC_SDF_SIM_SEQUENCE_SV
 `define SOC_SDF_SIM_SEQUENCE_SV
 
-class soc_sdf_sim_sequence extends uvm_sequence;//ahb_master_base_sequence;
+class soc_sdf_sim_sequence extends ahb_master_base_sequence;
 
   /** UVM Object Utility macro */
   `uvm_object_utils(soc_sdf_sim_sequence)

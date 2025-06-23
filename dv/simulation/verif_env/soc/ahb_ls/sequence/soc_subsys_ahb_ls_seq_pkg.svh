@@ -6,6 +6,7 @@
   //import svt_uvm_pkg::*;
   //import svt_ahb_uvm_pkg::*;    
   //import svt_ahb_sequence_pkg::*;
+  import ahb_pkg::*;
 
   `include "soc_top_v_sequence_pkg.svh"
 

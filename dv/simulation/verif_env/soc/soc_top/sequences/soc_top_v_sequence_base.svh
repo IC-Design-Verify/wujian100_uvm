@@ -41,6 +41,13 @@ task soc_top_v_sequence_base::pre_body();
       starting_phase.raise_objection(this);
     end
   `endif
+  fork
+    begin
+      env_cfg.pad_rst.wait_for_reset_leave();
+      env_cfg.pad_rst.wait_for_reset();
+      env_cfg.pad_rst.wait_for_reset_leave();
+    end
+  join
   // Add for intr_sequence execution
 
 endtask

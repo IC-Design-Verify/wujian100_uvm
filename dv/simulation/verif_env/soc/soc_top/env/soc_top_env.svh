@@ -23,6 +23,7 @@ class soc_top_env extends uvm_env;
   //env inst
 
   //agent inst
+  ahb_environment ahb_env;
 
   //virtual sequencer inst
   soc_top_v_sequencer soc_top_vsqr;
@@ -87,6 +88,11 @@ function void soc_top_env::build_phase(uvm_phase phase);
   //env exists or not
 
   //agent exists or not
+  if (env_cfg.has_ahb_agent) begin
+    uvm_config_db#(ahb_cfg)::set(this, "ahb1_env.mst_agent", "cfg", env_cfg.ahb_master_cfg);
+    uvm_config_db#(ahb_cfg)::set(this, "ahb1_env.slv_agent", "cfg", env_cfg.ahb_slave_cfg);
+    ahb_env = ahb_environment::type_id::create("ahb_env", this);
+  end
 
   //reference_model new
 
@@ -113,6 +119,10 @@ function void soc_top_env::connect_phase(uvm_phase phase);
   //end
 
   //v_seqr connect
+  if (env_cfg.has_ahb_agent) begin
+    soc_top_vsqr.ahb_mst_sqr = ahb_env.mst_agent.sqr;
+    soc_top_vsqr.ahb_slv_sqr = ahb_env.slv_agent.sqr;
+  end
 
   //tlm connect
 

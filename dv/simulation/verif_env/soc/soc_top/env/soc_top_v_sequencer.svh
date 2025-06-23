@@ -15,6 +15,8 @@ class soc_top_v_sequencer extends uvm_sequencer;
   // Component Members
   //------------------------------------------
   //agent seqr
+  ahb_sequencer ahb_mst_sqr;
+  ahb_sequencer ahb_slv_sqr;
 
   //sub_env v_sqr
 

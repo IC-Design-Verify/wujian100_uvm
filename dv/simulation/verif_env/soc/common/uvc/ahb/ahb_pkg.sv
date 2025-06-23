@@ -18,4 +18,6 @@ package ahb_pkg;
   `include "ahb_mst_rand_seq.svh"
   `include "ahb_slv_resp_seq.svh"
 
+  `include "ahb_env.svh"
+
 endpackage // ahb_pkg

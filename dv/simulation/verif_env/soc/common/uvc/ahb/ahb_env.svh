@@ -1,5 +1,5 @@
-class ahb_env extends uvm_env;
-  `uvm_component_utils(ahb_env)
+class ahb_environment extends uvm_env;
+  `uvm_component_utils(ahb_environment)
   
   ahb_pkg::ahb_agent mst_agent;
   ahb_pkg::ahb_agent slv_agent;

@@ -1,5 +1,36 @@
 `ifndef SOC_TOP_V_SEQUENCE__SV
 `define SOC_TOP_V_SEQUENCE__SV
+
+`ifdef USE_AHB_VIP_TO_REPLACE
+class soc_top_smoke_reg_sequence extends ahb_master_base_sequence;
+  `uvm_object_utils(soc_top_smoke_reg_sequence)
+
+  function new(string name = "soc_top_smoke_reg_sequence");
+    super.new(name);
+    `uvm_info("TRACE",$sformatf("%m"), UVM_HIGH)
+  endfunction: new
+
+  task body();
+    int int_tim_flag=0;
+    int int_tim_eoi=0;
+    `uvm_info("reg_seq", "Start send ahb_write trans...", UVM_LOW)
+    $display("Hello Friend!");
+    mem_write32_(32'h50000008, 32'h2);
+    mem_write32_(32'h50000000, 32'h400);
+    mem_write32_(32'h50000008, 32'h3);
+    mem_read32_ (32'h50000010, int_tim_flag);
+    while (int_tim_flag != 'h1) begin
+      mem_read32_ (32'h50000010, int_tim_flag);
+    end
+    mem_read32_(32'h5000000c, int_tim_eoi);
+    $display("\ntimer test successfully");
+    `uvm_info("reg_seq", "Start send ahb_write trans, Done...", UVM_LOW)
+  endtask
+
+endclass
+
+`endif
+
 class soc_top_smoke_v_sequence extends soc_top_v_sequence_base;
   `uvm_object_utils(soc_top_smoke_v_sequence)
   //`uvm_declare_p_sequencer(soc_top_vsequencer)
@@ -10,19 +41,10 @@ class soc_top_smoke_v_sequence extends soc_top_v_sequence_base;
   endfunction: new
 
   task body();
-    //`uvm_do_on_with(api_write_seq, p_sequencer.apb_sqr, {addr == 32'h4000_000c; data == 32'h1234_5678;})
-    //`uvm_do_on_with(api_read_seq , p_sequencer.apb_sqr, {addr == 32'h4000_0010;})
-    //api_read_seq.get_response(apb_trans)
-    //`uvm_info("APB_READ", $sformatf("data read from 32'h4000_0010 is %h", apb_trans.data), UVM_MEDIUM)
-
-    //`ifdef UVM_VERSION
-    //  `uvm_do({agent_name}_seq, p_sequencer.{agent_name}_sqr)
-    //`else
-    //  `uvm_do_on({agent_name}_seq, p_sequencer.{agent_name}_sqr)
-    //`endif
-//    fork
-//      `uvm_do_on({agent_name}_seq, p_sequencer.{agent_name}_sqr)
-//    join
+    `ifdef USE_AHB_VIP_TO_REPLACE
+      soc_top_smoke_reg_sequence reg_seq;
+      `uvm_do_on(reg_seq, p_sequencer.ahb_mst_sqr)
+    `endif
   endtask
 endclass: soc_top_smoke_v_sequence
 

@@ -12,6 +12,7 @@ uvm_resource_db #(virtual clock_if#(100,0))::set("interface_pool", {`"`SOC_TOP_P
 uvm_resource_db #(virtual reset_if#(20000))::set("interface_pool", {`"`SOC_TOP_PRE_NAME`", "_pad_rst"}, `MERGE_ITF_NAME(`SOC_TOP_ITF_PRE_NAME, pad_rst));
 
 
+uvm_config_db#(virtual ahb_if)::set(uvm_root::get(), `"uvm_test_top.`SOC_TOP_ENV_INST_NAME.ahb_env.*`", "vif", `MERGE_ITF_NAME(`SOC_TOP_ITF_PRE_NAME, ahb_vif));
 
 
 `undef SOC_TOP_ITF_PRE_NAME

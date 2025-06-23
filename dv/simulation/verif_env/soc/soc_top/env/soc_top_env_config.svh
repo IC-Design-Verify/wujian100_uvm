@@ -34,10 +34,13 @@ class soc_top_env_config extends uvm_object;
 
 
   //have agent or not
+  bit has_ahb_agent = 1;
 
   //add env config
 
   //add agent config
+  ahb_cfg       ahb_master_cfg;
+  ahb_cfg       ahb_slave_cfg;
 
   //register model
 
@@ -60,6 +63,10 @@ function soc_top_env_config::new(string name="soc_top_env_config");
   //create env config
 
   //create agent config
+  ahb_master_cfg = ahb_cfg::type_id::create("ahb_master_cfg");
+  ahb_slave_cfg  = ahb_cfg::type_id::create("ahb_slave_cfg");
+  `check_rand(ahb_master_cfg.randomize())
+  `check_rand(ahb_slave_cfg .randomize())
         
 endfunction: new
 

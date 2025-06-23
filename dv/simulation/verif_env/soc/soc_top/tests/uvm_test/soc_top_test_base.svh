@@ -241,49 +241,6 @@ endfunction
 
 `ifdef  USE_AHB_VIP_TO_REPLACE
 
-class soc_ahb_vip_run_with_txt_test extends ahb_base_test;
-
-  // UVM Factory Registration Macro
-  //
-  `uvm_component_utils(soc_ahb_vip_run_with_txt_test)
-
-  //------------------------------------------
-  // TLM/Component Members
-  //------------------------------------------
-
-  //------------------------------------------
-  // Data Members
-  //------------------------------------------
-
-  //------------------------------------------
-  // Methods
-  //------------------------------------------
-  // Standard UVM Methods:
-	extern function new(string name = "soc_ahb_vip_run_with_txt_test", uvm_component parent=null);
-	extern virtual function void build_phase(uvm_phase phase);
-  extern virtual task main_phase(uvm_phase phase);
-
-  // User-Defined Methods:
-
-endclass
-
-function soc_ahb_vip_run_with_txt_test::new(string name = "soc_ahb_vip_run_with_txt_test", uvm_component parent=null);
-  super.new(name,parent);
-endfunction: new
-
-function void soc_ahb_vip_run_with_txt_test::build_phase(uvm_phase phase);
-  super.build_phase(phase);
-endfunction: build_phase
-
-task soc_ahb_vip_run_with_txt_test::main_phase(uvm_phase phase);
-  soc_txt_virtual_sequence         txt_vseq;
-  super.main_phase(phase);
-  txt_vseq = soc_txt_virtual_sequence::type_id::create("txt_vseq", this);
-  phase.raise_objection(this);
-  #100ns;
-  txt_vseq.start();
-  phase.drop_objection(this);
-endtask
 
 `endif
 

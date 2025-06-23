@@ -1,7 +1,7 @@
 `ifndef SOC_ADDR_MAP_SEQUENCE_SV
 `define SOC_ADDR_MAP_SEQUENCE_SV
 
-class soc_addr_map_sequence extends uvm_sequence;//ahb_master_base_sequence;
+class soc_addr_map_sequence extends ahb_master_base_sequence;
 
   /** UVM Object Utility macro */
   `uvm_object_utils(soc_addr_map_sequence)

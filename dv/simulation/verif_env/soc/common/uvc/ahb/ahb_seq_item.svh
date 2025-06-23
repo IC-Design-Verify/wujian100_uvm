@@ -1,7 +1,14 @@
 
 // ahb sequence item
 class ahb_seq_item extends uvm_sequence_item;
-  `uvm_object_utils(ahb_seq_item)
+  `uvm_object_utils_begin(ahb_seq_item)
+    `uvm_field_int(addr, UVM_ALL_ON)
+    `uvm_field_sarray_int(data, UVM_ALL_ON)
+    `uvm_field_enum(hsize_e, size, UVM_ALL_ON)
+    `uvm_field_int(length, UVM_ALL_ON)
+    `uvm_field_enum(kind_e, kind, UVM_ALL_ON)
+  `uvm_object_utils_end
+  
   
   ahb_cfg cfg;
   

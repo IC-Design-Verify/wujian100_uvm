@@ -1,7 +1,7 @@
 `ifndef SOC_AHB_LS_SEQUENCE_SV
 `define SOC_AHB_LS_SEQUENCE_SV
 
-class soc_ahb_ls_sequence extends uvm_sequence;//ahb_master_base_sequence;
+class soc_ahb_ls_sequence extends ahb_master_base_sequence;
 
   /** UVM Object Utility macro */
   `uvm_object_utils(soc_ahb_ls_sequence)

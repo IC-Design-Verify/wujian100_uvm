@@ -1,7 +1,7 @@
 `ifndef SOC_GATE_SIM_SEQUENCE_SV
 `define SOC_GATE_SIM_SEQUENCE_SV
 
-class soc_gate_sim_sequence extends uvm_sequence;//ahb_master_base_sequence;
+class soc_gate_sim_sequence extends ahb_master_base_sequence;
 
   /** UVM Object Utility macro */
   `uvm_object_utils(soc_gate_sim_sequence)
