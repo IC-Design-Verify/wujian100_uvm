@@ -87,6 +87,10 @@ class ahb_master_base_sequence extends ahb_base_seq;
 
   endtask
 
+  task body();
+
+  endtask
+
 endclass
 
 class ahb_master_run_with_c_sequence  extends  ahb_master_base_sequence;
