@@ -88,3 +88,27 @@ class ahb_master_base_sequence extends ahb_base_seq;
   endtask
 
 endclass
+
+class ahb_master_run_with_c_sequence  extends  ahb_master_base_sequence;
+  /** UVM Object Utility macro */
+  `uvm_object_utils(ahb_master_run_with_c_sequence)
+
+  /** Class Constructor */
+  function new(string name="ahb_master_run_with_c_sequence");
+    super.new(name);
+    core = this;
+  endfunction
+  virtual task delay_time(int time_num);
+    repeat(time_num)begin
+      #1ns;
+    end
+  endtask
+
+  virtual task body();
+    super.body();
+    `ifdef USE_AHB_VIP_TO_REPLACE
+    test_start();
+    `endif
+  endtask
+endclass
+

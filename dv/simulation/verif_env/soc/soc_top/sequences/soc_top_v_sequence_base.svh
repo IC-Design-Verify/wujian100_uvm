@@ -64,15 +64,15 @@ class soc_vip_run_with_c_v_sequence extends soc_top_v_sequence_base;
   `uvm_object_utils(soc_vip_run_with_c_v_sequence)
   //`uvm_declare_p_sequencer(soc_vsequencer)
 
-  //ahb_master_run_with_c_sequence vip_run_c_seq;
+  ahb_master_run_with_c_sequence vip_run_c_seq;
   function new(string name = "soc_vip_run_with_c_v_sequence");
     super.new(name);
     `uvm_info("TRACE",$sformatf("%m"), UVM_HIGH)
   endfunction: new
 
   task body();
-    //vip_run_c_seq = new();
-    //`uvm_do_on(vip_run_c_seq, p_sequencer.ahb_sqr.master_sequencer[0])
+    vip_run_c_seq = new();
+    `uvm_do_on(vip_run_c_seq, p_sequencer.ahb_mst_sqr)
   endtask
 endclass: soc_vip_run_with_c_v_sequence
 `endif
