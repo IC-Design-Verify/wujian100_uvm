@@ -1,1 +1,1 @@
--f $PROJ_HOME/wujian100_open/soc/filelist.f
+-f $PROJ_HOME/dv/simulation/verif_env/soc/soc_top/filelist/filelist.f
