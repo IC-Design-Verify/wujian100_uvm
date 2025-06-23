@@ -1,0 +1,3 @@
+[submodule "vutils_pkg"]
+	path = vutils_pkg
+	url = https://github.com/gchinna/vutils_pkg.git
