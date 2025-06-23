@@ -1,6 +1,3 @@
 [submodule "wujian100_open"]
 	path = wujian100_open
 	url = git@github.com:XUANTIE-RV/wujian100_open.git
-[submodule "dv/simulation/verif_env/soc/common/uvc/ahb_pkg"]
-	path = dv/simulation/verif_env/soc/common/uvc/ahb_pkg
-	url = https://github.com/gchinna/ahb_pkg.git
