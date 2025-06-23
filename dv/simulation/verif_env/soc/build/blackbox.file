@@ -1,0 +1,3 @@
+<%include file='rtl_vlogan_opts.file'/>
+$KSIM_PWA_ROOT/design/blackbox/dmac.v
+$KSIM_PWA_ROOT/design/blackbox/core_top.v

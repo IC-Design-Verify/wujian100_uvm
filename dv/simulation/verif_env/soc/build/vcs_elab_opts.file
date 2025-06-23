@@ -1,0 +1,80 @@
+% if 'MINUS_GATE_SIM' in ENV:
+//TODO: following args will increase compile time x2
+//-hsopt=gates -hsopt=elabpart -hsopt=j16
++warn=noTFIPC
++warn=noIWNF
+% elif 'MINUS_XPROP' not in ENV:
++rad
+% endif
+
+% if 'MINUS_SDF' in ENV:
+# TODO: following args lead to cross partition SDF annotation error
+# -hsopt=hsimsdfic -hsopt=uphierarchyic
+
++neg_tchk -negdelay -sdfretain +sdfverbose
+
+# Adjust Negative INTERCONNECT/IOPATH DELAY
++warn=noSDFCOM_ANIOD
++warn=noSDFCOM_ANICD
+
+# Negative INTERCONNECT/IOPATH Delay encountered
++warn=noSDFCOM_NIOD
++warn=noSDFCOM_NICD
+
+# Up-hierarchy Interconnect Delay ignored
++warn=noSDFCOM_UHICD
+
+# Simple Wire Connection
++warn=noSDFCOM_SWC
+
+# INTERCONNECT will still be annotated
++warn=noSDFCOM_IWSBA
+
+-diag=sdf
+# TODO: since we are doing partial sdf annotation, this arg will output huge sdfAnnotateInfo log
+# -diag=sdf:verbose
+% endif
+
+% if 'MINUS_PR_SIM' in ENV:
+-hsopt=hsimsdfic -hsopt=uphierarchyic
+% endif
+
+% if re.search(r'power_upf$', ENV['KSIM__BUILD']):
+<% process_file("${ENV['DVDIR']}/simulation/verif_env/soc/sysc_ss/tb/top.upf", 1) %>
+-upf top.upf
+% endif
+
+// DO NOT modify following sections unless get permitted
+-licqueue -kdb -lca
+-assert svaext
+-CFLAGS -DVCS $VCS_HOME/etc/uvm-1.2/dpi/uvm_dpi.cc
+% if 'MINUS_CODE_COV' in ENV:
+  % if os.path.exists(search_local_central(f"{ENV['KSIM_TB_ROOT']}/build/cm_hier/cm_hier_{ENV['KSIM__BASE_BUILD']}.cfg","")):
+-cm_hier ${KSIM_TB_ROOT}/build/cm_hier/cm_hier_${KSIM__BASE_BUILD}.cfg
+  % elif os.path.exists(search_local_central("{ENV['KSIM_TB_ROOT']}/build/cm_hier/cm_hier_{ENV['KSIM__BUILD']}.cfg", "")):
+-cm_hier ${KSIM_TB_ROOT}/build/cm_hier/cm_hier_${KSIM__BUILD}.cfg
+  % elif os.path.exists(search_local_central("${ENV['KSIM_TB_ROOT']}/build/cm_hier.cfg", "")):
+-cm_hier ${KSIM_TB_ROOT}/build/cm_hier.cfg
+  % endif
+% endif
+
+% if 'MINUS_XPROP' in ENV:
+//-boundscheck
+-xprop=disableCellDefine
+  % if ENV['MINUS_XPROP'] != '':
+-xprop=$MINUS_XPROP
+  % elif os.path.exists(search_local_central(f"{ENV['KSIM_TB_ROOT']}/build/xprop/xprop_{ENV['KSIM__BASE_BUILD']}.cfg","")):
+-xprop=${KSIM_TB_ROOT}/build/xprop/xprop_${KSIM__BASE_BUILD}.cfg
+  % elif os.path.exists(search_local_central(f"{ENV['KSIM_TB_ROOT']}/build/xprop/xprop_{ENV['KSIM__BUILD']}.cfg","")):
+-xprop=${KSIM_TB_ROOT}/build/xprop/xprop_${KSIM__BUILD}.cfg
+  % elif os.path.exists(search_local_central(f"{ENV['KSIM_TB_ROOT']}/build/xprop.cfg", "")):
+-xprop=${KSIM_TB_ROOT}/build/xprop.cfg
+  % endif
+% endif
+
+-debug_access+r+f soc_top_cfg waveform_dump 
+
+# show lib mapping information
+# -diag libconfig
+
+

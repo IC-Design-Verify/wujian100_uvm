@@ -1,0 +1,273 @@
+#! /bin/csh -fev
+
+<% 
+    # extract analyze and elaborate options form COMP_OPTS
+    elab_opts = f"{ENV.get('KSIM_CMD_COMP_OPTS', '')} {ENV.get('KSIM__COMP_OPTS', '')} {ENV.get('KSIM_COMP_OPTS', '')}"
+    if 'MINUS_SDF' not in ENV:
+      elab_opts += " +nospecify"
+      elab_opts += " -add_seq_delay 1ps" if 'MINUS_GATE_SIM' in ENV else ''
+
+    if 'MINUS_GATE_SIM' in ENV:
+      elab_opts += " -diskopt";
+      elab_opts += " -hsopt=rfn" if '-partcomp' in elab_opts else ''
+
+    # special setting for power aware simulation
+    if re.search(r"_upf", ENV['KSIM__BUILD']):
+      elab_opts += " +define+USE_POWER_AWARE"
+      if ENV.get('MINUS_GATE_SIM') is None:# disable precompile
+        ENV['MINUS_NO_PRECOMPILE'] = '1'
+      ENV['KSIM_DEF_USE_POWER_AWARE'] = '1'; 
+
+
+    analyze_opts = re.findall(r'(?<!\S)\+define\+\S+', elab_opts)
+    analyze_opts.extend(re.findall(r'-full64', elab_opts))
+    elab_opts = re.sub(r'(?<!\S)\+define\+\S+', '', elab_opts)
+    ENV['KSIM_ANALYZE_OPTS'] = " ".join(analyze_opts)
+    ENV['KSIM_ELAB_OPTS'] = elab_opts;
+
+    # setenv
+    ENV['PROJ_HOME']  = ENV['KSIM_PWA_ROOT'];
+    ENV['DEDIR']      = ENV['DESIGN_HOME'] = ENV['WJ100_DESIGN'] = f"{ENV['KSIM_PWA_ROOT']}/design";
+    ENV['DVDIR']      = f"{ENV['KSIM_PWA_ROOT']}/dv";
+    ENV['LIGHT_ROOT'] = f"{ENV['KSIM_PWA_ROOT']}/dv/simulation/verif_env/soc";
+
+    # filelist
+    if 'MINUS_GATE_SIM' in ENV:
+      if 'MINUS_PRE_DFT_SIM' in ENV:
+        ENV['NETLIST_VERSION'] = f"{ENV['MINUS_GATE_SIM']}_PreDFT_netlist"
+      elif 'MINUS_POST_DFT_SIM' in ENV:
+        ENV['NETLIST_VERSION'] = f"{ENV['MINUS_GATE_SIM']}_PostDFT_netlist"
+      elif 'MINUS_PR_SIM' in ENV:
+        ENV['NETLIST_VERSION'] = f"{ENV['MINUS_GATE_SIM']}_PR_netlist"
+      elif 'MINUS_PG_SIM' in ENV:
+        ENV['NETLIST_VERSION'] = f"{ENV['MINUS_GATE_SIM']}_PG_netlist"
+
+
+      if ENV.get('NETLIST_HOME', None) is None:
+        ENV['NETLIST_HOME'] = f"{ENV['KSIM_RELEASE_ROOT']}/{ENV['NETLIST_VERSION']}"
+      process_file(f"{ENV['NETLIST_HOME']}/blackbox/blackbox.file", 1);
+      if 'MINUS_SDF' in ENV:
+        os.system(f"ln -sfn {ENV['NETLIST_HOME']}/SDF/{ENV['MINUS_SDF']} SDF");
+        # system(f"ln -sfn {ENV['NETLIST_HOME']}/sync_cell_list sync_cell_list");
+        # ucli_path = search_local_central(f"{ENV['KSIM_TB_ROOT']}/gate_sim/ucli");
+        # system(f"ln -sfn {ucli_path} ucli");
+    else:
+      process_file(f"{ENV['KSIM_TB_ROOT']}/build/blackbox.file", 1)
+
+    for kind in ('tb', 'rtl'):
+      if 'KSIM_DEF_RTL_ONLY' in ENV and kind == 'tb':
+        continue
+
+      if process_file(f"{ENV['DVDIR']}/simulation/verif_env/soc/build/vcs_{ENV['KSIM__BUILD']}_{kind}.file"):
+        os.rename(f"vcs_{ENV['KSIM__BUILD']}_{kind}.file", f"vcs_{ENV['KSIM__BASE_BUILD']}_{kind}.file")
+      else:
+        process_file(f"{ENV['DVDIR']}/simulation/verif_env/soc/build/vcs_{ENV['KSIM__BASE_BUILD']}_{kind}.file", 1)
+
+    process_file(f"{ENV['KSIM_TB_ROOT']}/build/vcs_elab_opts.file", 1);
+
+    if 'KSIM_DEF_NORMAL_RESET' in ENV and 'MINUS_GATE_SIM' not in ENV:
+      print("Turn off the using of precompile lib since NORMAL_RESET defined!\n")
+      ENV['MINUS_NO_PRECOMPILE'] = 1;
+
+    if 'MINUS_GATE_SIM' in ENV:
+      ENV['RTL_LIB_PREFIX'] = ""
+      if 'MINUS_NO_PRECOMPILE' not in ENV:
+        for base in ("/tmp/precompile", "/remote/xxx/proj/common/dv/precompile"):
+          ENV['RTL_LIB_PREFIX'] = f"{base}/{ENV['NETLIST_VERSION']}/";
+          if os.path.exists(ENV['RTL_LIB_PREFIX']):
+            break
+
+      if not os.path.exists(ENV['RTL_LIB_PREFIX']):
+        ENV['RTL_LIB_PREFIX'] = ""
+
+      process_file(f"{ENV['KSIM_TB_ROOT']}/build/gatesim_lib.flist", 1);
+      if 'MINUS_PG_SIM' in ENV:
+        os.system("sed -i 's#\\(/Foundry/TSMC/TSMC_N7_at/TSMCHOME/digital/.\\+\\)\\.v#\\1_pwr.v#' gatesim_lib.flist");
+    else:
+      # select precompile lib
+      ENV['RTL_LIB_PREFIX'] = ""
+      if 'MINUS_NO_PRECOMPILE' not in ENV:
+        if not os.path.exists(f"{ENV['KSIM_PWA_ROOT']}/design") and ENV['KSIM_INTG'] != "none" and not ENV['KSIM_INTG'].startswith("/"):
+          ENV['RTL_LIB_PREFIX'] = f"/remote/xxx/proj/common/dv/precompile/{ENV['KSIM_INTG']}/"
+          if not os.path.exists(ENV['RTL_LIB_PREFIX']):
+            ENV['RTL_LIB_PREFIX'] = ""
+
+      if re.search("_upf", ENV['KSIM__BUILD']):
+        # replace for power aware pad lib
+        #os.system(f"sed -i 's#\\(/Foundry/TSMC/TSMC_N7_at/TSMCHOME/digital/.\\+\\)\\.v#\\1_pwr.v#' vcs_{ENV['KSIM__BASE_BUILD']}_rtl.file");
+        pass
+
+%>
+
+% if 'MINUS_GATE_SIM' in ENV:
+mkdir -p gate_lib lib_model lib_dummy work
+/bin/cat > synopsys_sim.setup <<__EOF__
+WORK > DEFAULT
+DEFAULT:    work
+  % if os.path.exists(f"{ENV['NETLIST_HOME']}/filelist"):
+lib_common: ${ENV.get('RTL_LIB_PREFIX','')}lib_common
+lib_cpu:    ${ENV.get('RTL_LIB_PREFIX','')}lib_cpu
+  % else:
+gateLib:    ${ENV.get('RTL_LIB_PREFIX','')}gate_lib
+  % endif
+modelLib:   ${ENV.get('RTL_LIB_PREFIX','')}lib_model
+dummyLib:   lib_dummy
+ERROR_WHEN_UNBOUND = TRUE
+__EOF__
+
+/bin/cat > soc_top_cfg.sv <<__EOF__
+config soc_top_cfg;
+% if 'KSIM_DEF_RTL_ONLY' in ENV:
+  design gateLib.soc_top;
+% else:
+  design DEFAULT.soc_top_tb_top;
+% endif
+  default liblist gateLib DEFAULT;
+
+% if 'MINUS_NO_DUMMY' not in ENV:
+  % if 'DUMMY_CPU' in ENV:
+  //cell core_top use dummyLib.core_top;
+  % endif
+% endif
+  
+% if re.search(r'-partcomp', ENV['KSIM_ELAB_OPTS']):
+  //partition cell soc_top;
+% endif
+
+% if 'DUMMY_DDR' in ENV:
+  //cell lpddr_ss_wrap_lpddr_top_0 use dummyLib.lpddr_top;
+  //cell sync_fifo liblist dummyLib;
+% endif
+
+endconfig
+
+//config soc_top_test_cfg;
+//  design DEFAULT.soc_top_test;
+//endconfig
+__EOF__
+
+<% 
+if 'MINUS_SDF' in ENV:
+  all_ss = {
+              "sysc"      : ["sysc_ss_wrap"],
+              "cpu"       : ["cpu_ss_wrap"], 
+              "stor"      : ["stor_ss_wrap"]
+  }
+  ss_sdf_on = {}
+  if MINUS_PARTIAL_SDF in ENV:
+    partial_sdf = 1
+  else:
+    partial_sdf = 0
+  
+  if partial_sdf:
+    for ss in re.split(r'\W+', ENV['MINUS_PARTIAL_SDF']):
+      if ss not in all_ss.keys():
+        raise Exception("ERROR: invalid subsys name specified in -partial_sdf\n")
+      ss_sdf_on[ss] = 1
+
+  with open("vcs_opt.cfg", 'w') as fl:
+    fl.write("tree {PLLTS7FFLJFRACH} {noSpecify};\n")
+    for ss in all_ss.keys():
+      if not partial_sdf:
+        if ss == 'cpu' and 'DUMMY_CPU' in ENV:
+          fl.write("tree {cpu_ss_wrap} {noSpecify};\n")
+        else:
+          print(f"Enable SDF annotation for {ss}\n")
+          ENV['KSIM_ANALYZE_OPTS'] += f" +define+SDF_ON_{ss.upper()} "
+      else:
+        if ss in ss_sdf_on:
+          print(f"Enable SDF annotation for {ss}\n")
+          ENV['KSIM_ANALYZE_OPTS'] += " +define+SDF_ON_{ss.upper()}"
+        else:
+          for wrap in all_ss[ss]:
+            fl.write("tree {$wrap} {noSpecify};\n")
+  if 'KSIM_ELAB_OPTS' not in ENV:
+    ENV['KSIM_ELAB_OPTS'] = ''
+  ENV['KSIM_ELAB_OPTS'] = f"{ENV['KSIM_ELAB_OPTS']} +optconfigfile+./vcs_opt.cfg"
+%>
+
+% if 'MINUS_TB_ONLY' not in ENV:
+  vlogan ${ENV.get('KSIM_ANALYZE_OPTS','')} -sverilog -kdb -timescale=1ns/1ps -error=noMPD -file gatesim_lib.flist -work modelLib -l gatesim_lib_vlogan.log
+
+  setenv NETLIST_HOME ${ENV.get('NETLIST_HOME')}
+
+  % if ENV['RTL_LIB_PREFIX'] == "":
+    % if os.path.exists(f"{ENV['NETLIST_HOME']}/filelist"):
+  #vlogan ${ENV.get('KSIM_ANALYZE_OPTS','')} -nc -kdb -timescale=1ns/1ps -file ${ENV.get('NETLIST_HOME','')}/filelist/common.flist -work lib_common -l common_vlogan.log &
+  #vlogan ${ENV.get('KSIM_ANALYZE_OPTS','')} -nc -kdb -timescale=1ns/1ps -file ${ENV.get('NETLIST_HOME','')}/filelist/cpu.flist -work lib_cpu -l cpu_vlogan.log &
+  #wait
+    % else:
+  vlogan ${ENV.get('KSIM_ANALYZE_OPTS','')} -kdb -timescale=1ns/1ps -error=noMPD -file ${ENV.get('NETLIST_HOME','')}/soc_top.flist -work gateLib -l gate_vlogan.log
+    % endif
+  % endif
+% endif
+
+
+
+% else:
+
+mkdir -p lib_rtl lib_dma lib_dummy work
+/bin/cat > synopsys_sim.setup <<__EOF__
+WORK > DEFAULT
+DEFAULT:    work
+dmaLib:     ${ENV.get('RTL_LIB_PREFIX','')}lib_dma
+rtlLib:     ${ENV.get('RTL_LIB_PREFIX','')}lib_rtl
+dummyLib:   lib_dummy
+ERROR_WHEN_UNBOUND = TRUE
+__EOF__
+
+/bin/cat > soc_top_cfg.sv <<__EOF__
+config soc_top_cfg;
+% if 'RTL_ONLY' in globals():
+  design rtlLib.soc_top;
+% else:
+  design DEFAULT.soc_top_tb_top;
+% endif
+  default liblist dmaLib rtlLib;
+% if 'DUMMY_CPU' in ENV:
+  cell core_top use dummyLib.core_top;
+% endif
+% if 'DUMMY_DMA' in ENV:
+  cell dmac_top use dummyLib.dmac_top;
+% endif
+endconfig
+//config soc_top_test_cfg;
+//  design DEFAULT.soc_top_test;
+//endconfig
+__EOF__
+
+
+  % if 'MINUS_TB_ONLY' not in ENV and ENV['RTL_LIB_PREFIX'] == "":
+    vlogan ${ENV.get('KSIM_ANALYZE_OPTS','')} -file vcs_${ENV.get('KSIM__BASE_BUILD','')}_rtl.file -work rtlLib -l dut_vlogan.log
+  % endif
+% endif
+
+vlogan ${ENV.get('KSIM_ANALYZE_OPTS','')} -file blackbox.file -work dummyLib -l dummy_vlogan.log
+
+% if 'RTL_ONLY' in ENV:
+vlogan ${ENV.get('KSIM_ANALYZE_OPTS','')} -kdb -timescale=1ns/1ps -ntb_opts uvm-1.2 -l uvm_vlogan.log
+
+vlogan ${ENV.get('KSIM_ANALYZE_OPTS','')} -kdb soc_top_cfg.sv $KSIM_PWA_ROOT/dv/build/waveform_dump.sv -l tb_vlogan.log
+
+% else:
+
+vlogan ${ENV.get('KSIM_ANALYZE_OPTS','')} -kdb -timescale=1ns/1ps \
+    +define+UVM_REPORT_DISABLE_FILE_LINE \
+    +define+UVM_DISABLE_AUTO_ITEM_RECORDING \
+    +define+UVM_EVENT_CALLBACK_FIX \
+  % if ENV['KSIM__BUILD'] != "disp" and ENV['KSIM__BUILD'] != "disp_power_upf":
+    +define+UVM_NO_DEPRECATED \
+  % endif
+  % if re.search(r"^soc_fusa", ENV['KSIM__BUILD']):
+    +define+UVM_REG_DATA_WIDTH=128 \
+  % endif
+    +define+UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR \
+    +define+UVM_PACKER_MAX_BYTES=${ENV['UVM_PACKER_MAX_BYTES']} \
+    -ntb_opts uvm-1.2 -l uvm_vlogan.log
+
+vlogan ${ENV.get('KSIM_ANALYZE_OPTS','')} ${ENV.get('VCS_HOME','')}/etc/uvm-1.2/uvm_macros.svh -file vcs_${ENV.get('KSIM__BASE_BUILD','')}_tb.file soc_top_cfg.sv +define+TB_TOP_NAME=soc_top_tb_top $KSIM_PWA_ROOT/dv/build/waveform_dump.sv -l tb_vlogan.log
+
+% endif
+
+vcs ${ENV.get('KSIM_ELAB_OPTS','')} -timescale=1ns/1ps -file vcs_elab_opts.file |& tee -i vcs.log
+

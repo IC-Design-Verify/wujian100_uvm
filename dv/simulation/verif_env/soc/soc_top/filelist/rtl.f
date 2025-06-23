@@ -1,0 +1,1 @@
+-f $PROJ_HOME/wujian100_open/soc/filelist.f

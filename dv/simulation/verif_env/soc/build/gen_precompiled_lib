@@ -1,0 +1,41 @@
+#!/bin/csh -fv
+
+set head=$1
+
+mkdir -p lib_rtl lib_c78 work
+
+/bin/cat > synopsys_sim.setup <<__EOF__
+WORK > DEFAULT
+DEFAULT:    work
+c78Lib:     lib_c78
+rtlLib:     lib_rtl
+fastLib:    lib_fast
+ERROR_WHEN_UNBOUND = TRUE
+__EOF__
+
+#source /remote/r1/proj/common/dv/r1_dv.cshrc
+#setenv PERL5LIB /remote/r1/proj/common/dv/usim
+#
+#setenv DEDIR /remote/r1/proj/common/dv/release/$head/design
+#setenv DVDIR /remote/r1/proj/common/dv/release/$head/dv
+#setenv USIM_TB_ROOT /remote/r1/proj/common/dv/release/$head/dv/simulation/verif_env/soc
+#setenv USIM_PWA_ROOT /remote/r1/proj/common/dv/release/$head
+#setenv USIM_RELEASE_ROOT /remote/r1/proj/common/dv/release/$head
+#setenv DESIGN_HOME $DEDIR
+
+set vhdlan_opts = "-full64 -kdb"
+
+#usim_process_file $USIM_TB_ROOT/build/rtl_vlogan_opts.file
+#usim_process_file $USIM_TB_ROOT/build/c78_wrapper.file
+#usim_process_file $DEDIR/rpu_ss/filelist/rpu_ss_release_cfg.flist
+#usim_process_file $USIM_TB_ROOT/build/fast_pcie.file
+#usim_process_file $USIM_TB_ROOT/build/vcs_soc_rtl.file
+#
+#bsub -J gen_lib -o c78_vlogan.lsf.log csh -f -c "vhdlan $vhdlan_opts -work c78Lib -l c78_vhdlan.log -f $DEDIR/cam_isp_ss/src/arm_isp/rel_vhdl_synopsys.list ;\
+# vlogan -full64 -work c78Lib -l c78_vlogan.log -f c78_wrapper.file"
+#
+#bsub -J gen_lib -o rpu_vlogan.lsf.log vlogan -full64 -f rtl_vlogan_opts.file -f rpu_ss_release_cfg.flist -work rpuLib -l rpu_vlogan.log
+#
+#bsub -J gen_lib -o fast_pcie_vlogan.lsf.log vlogan -full64 -work fastLib -l fast_pcie_vlogan.log -f fast_pcie.file
+#
+#bsub -J gen_lib -o dut_vlogan.lsf.log vlogan -full64 -work rtlLib -l dut_vlogan.log -f vcs_soc_rtl.file

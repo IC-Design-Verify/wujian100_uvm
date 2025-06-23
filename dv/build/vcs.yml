@@ -1,0 +1,69 @@
+benches:
+    - name: soc_top
+      rel_path: dv/simulation/verif_env/soc/soc_top
+      attrib:
+          owner: IC_verify
+          tag: SOC
+    # testbench declare
+
+
+shortcuts:    
+    - name: -no_precompile
+      setenv: true
+      help: Disable the usage for precompiled lib under /remote/proj/common/dv/precompile
+
+    - name: -tb_only
+      setenv: true
+      help: Recompile testbench only to speed up compile
+
+    - name: -no_dummy
+      setenv: true
+      help: Ignore all RTL dummy defines except DDR dummy
+
+    - name: -cdc_rand
+      args: ['-comp', '+define+SIM_CDC_RAND_DELAY'] #, '-no_precompile'] #, '-comp', '+define+DW_MODEL_MISSAMPLES']
+      help: Enable random CDC delay model
+
+    - name: -xprop(=\S+)?
+      args: ['-simdir1', 'xprop', '-comp', '+define+XPROP']
+      setenv: true
+      help: Run with x-proprogation
+
+    - name: -gate_sim=((\d+)\w*)
+      args: ['-def', 'USE_FEEDTHROUGH', '-comp', '+define+GATE_SIM +define+GATE_SIM_$1 +define+GATE_SIM_$2 -hsopt=elabpart:automod -hsopt=j']
+      setenv: true
+      help: Do not use this directly
+
+    - name: -pre_dft_sim=((\d+)\w*)
+      args: ['-gate_sim=$1', '-comp', '+define+PRE_DFT_GATE_SIM +define+PRE_DFT_GATE_SIM_$1 +define+PRE_DFT_GATE_SIM_$2']
+      setenv: true
+      help: Run pre-DFT netlist sim
+
+    - name: -post_dft_sim=((\d+)\w*)
+      args: ['-gate_sim=$1', '-comp', '+define+POST_DFT_GATE_SIM +define+POST_DFT_GATE_SIM_$1 +define+POST_DFT_GATE_SIM_$2']
+      setenv: true
+      help: Run post-DFT netlist sim
+
+    - name: -pr_sim=((\d+)\w*)
+      args: ['-gate_sim=$1', '-comp', '+define+PR_GATE_SIM +define+PR_GATE_SIM_$1 +define+PR_GATE_SIM_$2']
+      setenv: true
+      help: Run post PR netlist sim with SDF
+
+    - name: -pg_sim=((\d+)\w*)
+      args: ['-gate_sim=$1', '-comp', '+define+PG_GATE_SIM +define+PG_GATE_SIM_$1 +define+PG_GATE_SIM_$2']
+      setenv: true
+      help: Run post PG netlist sim
+
+    - name: -sdf=(\w+)
+      args: ['-comp', '+define+SDF_SIM +define+SDF_SIM_$1']
+      setenv: true
+      help: Run post PR netlist sim with SDF corner
+
+    - name: -partial_sdf
+      args: ['-comp', '+define+PARTIAL_SDF']
+      setenv: true
+      help: Do SDF annotation for CAM/DISP/ETH/USB/PCIE/VPU/GPU/STOR only
+
+setenv:
+    - name: USIM_PERMITTED_TAG_LIST
+      value: QG,sanity,upf,closed,SOC,SUBSYS,UT,CPU,PERIPH,FUSA,SOC_TOP

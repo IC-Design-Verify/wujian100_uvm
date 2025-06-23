@@ -1,0 +1,106 @@
+% if ENV.get("USE_FEEDTHROUGH", False):
++define+USE_FEEDTHROUGH
+% endif
+
+#${ENV['KSIM_TB_ROOT']}/soc_top/tb/tb_macros.svh
+
+# make RTL macros visible in TB too
+<%include file="rtl_vlogan_opts.file"/>
+
+% if 'MINUS_GATE_SIM' in ENV or "MINUS_XPROP" in ENV:
+  +incdir+${ENV['DVDIR']}/simulation/verif_env/soc/gate_sim/no_rst_reg
+  +incdir+${ENV['DVDIR']}/simulation/verif_env/soc/gate_sim/tb
+% endif
+
+
+<% ENV['UVM_PACKER_MAX_BYTES'] = '1500000' %>
+
+% if re.search(r'^soc_top', ENV['KSIM__BUILD']):
+
+    <% ENV['UVM_PACKER_MAX_BYTES'] = '1500000' %>
+
+    % if re.search(r"^soc_top_no_cpu", ENV['KSIM__BUILD']):
+      <% ENV['DUMMY_CPU'] = "1" %>
+    % endif
+    % if re.search(r"addr_map", ENV['KSIM__BUILD']):
+      +define+USE_ADDR_MAP
+    % elif re.search(r"had", ENV['KSIM__BUILD']):
+      +define+USE_HAD
+    % endif
+
+% elif re.search(r'^apb0', ENV['KSIM__BUILD']):
+
+    +define+USE_APB0
+
+    % if re.search(r"^apb0_no_cpu", ENV['KSIM__BUILD']):
+      <% ENV['DUMMY_CPU'] = "1" %>
+    % endif
+
+    % if re.search(r"pwm$", ENV['KSIM__BUILD']):
+      +define+USE_APB0_PWM
+    % elif re.search(r"usi", ENV['KSIM__BUILD']):
+      +define+USE_APB0_USI
+      % if re.search(r"i2c$", ENV['KSIM__BUILD']):
+        +define+USI_I2C
+      % elif re.search(r"spi$", ENV['KSIM__BUILD']):
+        +define+USI_SPI
+      % elif re.search(r"uart$", ENV['KSIM__BUILD']):
+        +define+USI_UART
+      % endif
+    % endif
+
+% elif re.search(r'^apb1', ENV['KSIM__BUILD']):
+    +define+USE_APB1
+    % if re.search(r"^apb1_no_cpu", ENV['KSIM__BUILD']):
+      <% ENV['DUMMY_CPU'] = "1" %>
+    % endif
+
+    % if re.search(r"gpio$", ENV['KSIM__BUILD']):
+      +define+USE_APB1_GPIO
+    % endif
+
+% endif
+
+
+% if 'DUMMY_CPU' in ENV:
+  +define+USE_AHB
+  +define+USE_AHB_VIP_TO_REPLACE
+% else:
+  #+incdir+$DVDIR/simulation/verif_env/soc/cpu_ss/tb
+% endif
+
+##<%
+##  foreach (keys %ENV) {
+##    print $OUT "    +define+$1\n" if /^KSIM_DEF_(DUMMY_\w+)/;
+##  }
+##%>
+
+
+    -sverilog -kdb -timescale=1ns/1ps
+
+    -ntb_opts uvm-1.2
+    +define+UVM_EVENT_CALLBACK_FIX
+    +define+UVM_REPORT_DISABLE_FILE_LINE
+    +define+UVM_DISABLE_AUTO_ITEM_RECORDING
+
+    +define+UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR
+
+    +define+SYNOPSYS_SV
+    +define+SVT_FSDB_ENABLE
+    +define+SVT_UVM_TECHNOLOGY
+    +define+SVT_LPDDR_TIMESCALE
+
+    +libext+.v+.sv
+
+    +define+UVM_PACKER_MAX_BYTES=${ENV['UVM_PACKER_MAX_BYTES']}
+    +incdir+$DESIGNWARE_HOME/include/sverilog
+    +incdir+$DESIGNWARE_HOME/src/sverilog/vcs
+    #+incdir+$DESIGNWARE_HOME/include/verilog
+    #+incdir+$DESIGNWARE_HOME/src/verilog/vcs
+
+    -y $DESIGNWARE_HOME/src/sverilog/vcs
+    #-y $DESIGNWARE_HOME/src/verilog/vcs
+    
+    -f $DVDIR/simulation/verif_env/soc/soc_top/filelist/tb.f
+    -f $DVDIR/simulation/verif_env/soc/soc_top/filelist/tc.f
+

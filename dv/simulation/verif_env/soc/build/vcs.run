@@ -1,0 +1,86 @@
+#! /bin/csh -f
+test -e "${ENV['KSIM__TEST']}.log" && unlink ${ENV['KSIM__TEST']}.log
+test -e simv.vdb    || test -L simv.vdb    && unlink simv.vdb
+test -e simv        || test -L simv        && unlink simv
+test -e simv.daidir || test -L simv.daidir && unlink simv.daidir
+test -e simv.vdb    && unlink simv.vdb
+test -e simv        && unlink simv
+test -e simv.daidir && unlink simv.daidir
+ln -s ${ENV['KSIM_COMP_DIR']}/simv         .
+ln -s ${ENV['KSIM_COMP_DIR']}/simv.vdb     .
+ln -s ${ENV['KSIM_COMP_DIR']}/simv.daidir  .
+test -w simv.vdb    || unlink simv.vdb
+
+
+% if process_file(f"vcs_{ENV['KSIM__BUILD']}.pre_run"):
+./vcs_${ENV['KSIM__BUILD']}.pre_run
+% elif process_file(f"vcs_{ENV['KSIM__BASE_BUILD']}.pre_run"):
+./vcs_${ENV['KSIM__BASE_BUILD']}.pre_run
+% elif process_file("vcs.pre_run"):
+./vcs.pre_run
+% endif
+
+% if 'KSIM__PRE_RUN_CMD' in ENV:
+${ENV['KSIM__PRE_RUN_CMD']}
+% endif
+
+<%
+core_name_pattern = r'-core_name=(\w+)'
+matches = re.findall(core_name_pattern, ENV.get('KSIM__C_CODE_OPTS', ''))
+for core_name in matches:
+  ENV['KSIM__SIM_OPTS'] += f" +{core_name}_check "
+%>
+
+% if ENV.get('MINUS_SV_ONLY', '0') == '0':
+  % if 'KSIM__C_CODE_OPTS' in ENV:
+    ${ENV['KSIM_TB_ROOT']}/build/make_hex ${ENV['KSIM__C_CODE_OPTS']} |& tee -i make_hex.log || exit 1
+  % endif
+  % if 'KSIM__VIP_C_CODE_OPTS' in ENV:
+    ${ENV['KSIM_TB_ROOT']}/build/make_hex_for_vip ${ENV['KSIM__VIP_C_CODE_OPTS']} |& tee -i make_hex.log || exit 1
+  % endif
+  % if int(ENV.get('MINUS_C_ONLY', 0)) == 1:
+    exit 0
+  % endif
+% endif
+
+% if 'KSIM__SAVE' in ENV:
+ <% ENV['KSIM__SIM_OPTS'] = f"+save $ENV['KSIM__SIM_OPTS']"%>
+% endif
+
+% if 'KSIM__RESTART' in ENV:
+  <% ENV['KSIM__SIM_OPTS'] = f"-r SAVE +restore +ntb_random_reseed {ENV['KSIM__SIM_OPTS']}"%>
+  <% ENV['KSIM__RESTART']  = f"{ENV['KSIM__TB']}.{ENV['KSIM__RESTART']}" if 'KSIM__TB' in ENV else "" %>
+  ln -sfn ../${ENV['KSIM__RESTART']}/SAVE .
+  ln -sfn ../${ENV['KSIM__RESTART']}/SAVE.FILES .
+% endif
+
+<% 
+if 'MINUS_UCLI' in ENV:
+  ENV['KSIM__UCLI'] = ENV['MINUS_UCLI']
+%>
+% if 'KSIM__UCLI' in ENV:
+  <%
+    process_file(ksim_abs_path(ENV['KSIM__UCLI'], ENV['KSIM_TB_ROOT']));
+    ENV['KSIM__UCLI'] = os.path.basename(ENV['KSIM__UCLI']);
+    ENV['KSIM__SIM_OPTS'] = f"-ucli -i {ENV['KSIM__UCLI']} {ENV['KSIM__SIM_OPTS']}"
+  %>
+% endif
+
+./simv ${ENV.get('KSIM_CMD_SIM_OPTS', '')} ${ENV.get('KSIM__SIM_OPTS', '')} ${ENV.get('KSIM_SIM_OPTS', '')} +ntb_random_seed=${ENV.get('KSIM__SEED', 'None')} -cm_name ${ENV.get('KSIM__TEST', '')} |& tee -i ${ENV.get('KSIM__TEST', '')}.log
+set exit_code=$status
+
+${ENV['KSIM_TEMPLATE_PATH']}/vcs.log_parse ${ENV['KSIM__TEST']}.log
+
+% if process_file(f"vcs_{ENV['KSIM__BUILD']}.post_run"):
+./vcs_${ENV['KSIM__BUILD']}.post_run
+% elif process_file(f"vcs_{ENV['KSIM__BASE_BUILD']}.post_run"):
+./vcs_${ENV['KSIM__BASE_BUILD']}.post_run
+% elif process_file("vcs.post_run"):
+./vcs.post_run
+% endif
+
+% if 'KSIM__POST_RUN_CMD' in ENV:
+${ENV['KSIM__POST_RUN_CMD']}
+% endif
+
+exit $exit_code
