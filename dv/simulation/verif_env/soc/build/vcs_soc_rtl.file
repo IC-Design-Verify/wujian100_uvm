@@ -1,8 +1,0 @@
-##-f $KSIM_TB_ROOT/build/rtl_vlogan_opts.file
-<%include file="rtl_vlogan_opts.file"/>
-
-% if ENV.get('USE_FEEDTHROUGH', False):
--f $DEDIR/soc_top/filelist/soc_top_fthr_cfg.flist
-% else:
--f $DEDIR/soc_top/filelist.f
-% endif
