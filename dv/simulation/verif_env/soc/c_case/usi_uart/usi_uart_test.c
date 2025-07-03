@@ -127,28 +127,5 @@ int test_start(void)
     printf("usi1 uart receive complete\n");
     printf("==========================\n");
 
-//initial mem 
-  mem_write32_(0x20025020, 0x11111111);
-  mem_write32_(0x20025024, 0x22222222);
-  mem_write32_(0x20025028, 0x33333333);
-  mem_write32_(0x2002502c, 0x44444444);
-  mem_write32_(0x20025030, 0x55555555);
-  mem_write32_(0x20025034, 0x66666666);
-  mem_write32_(0x20025038, 0x77777777);
-  mem_write32_(0x2002503c, 0x88888888);
-
-  mem_write32_(0x20025000, 0x00000000);
-  mem_write32_(0x20025004, 0x00000000);
-  mem_write32_(0x20025008, 0x00000000);
-  mem_write32_(0x2002500c, 0x00000000);
-  mem_write32_(0x20025010, 0x00000000);
-  mem_write32_(0x20025014, 0x00000000);
-  mem_write32_(0x20025018, 0x00000000);
-  mem_write32_(0x2002501c, 0x00000000);
-
-  sim_save();
-
-    printf("11111111111111111111111111\n");
-
   sim_end();
 }
