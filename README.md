@@ -15,7 +15,7 @@
 
 # Steps
 	# 下载仓库及子仓库
-	git clone --recurse-submodule https://github.com/IC-Design-Verify/wujian100_uvm.git
+	git clone --recurse-submodules https://github.com/IC-Design-Verify/wujian100_uvm.git
 	# 到dv目录
 	cd wujian100_uvm/dv
 	# 切换环境到csh/tcsh
