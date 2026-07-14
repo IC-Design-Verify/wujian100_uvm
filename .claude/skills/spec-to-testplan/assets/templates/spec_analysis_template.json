@@ -1,0 +1,78 @@
+{
+  "design_name": "<DESIGN_NAME>",
+  "spec_source": "<PATH_TO_SPEC_DOCUMENT>",
+  "interfaces": [
+    {
+      "name": "<INTERFACE_NAME>",
+      "type": "<PROTOCOL_TYPE>",
+      "role": "<master|slave|monitor>",
+      "signals": [
+        {
+          "name": "<SIGNAL_NAME>",
+          "direction": "<input|output|inout>",
+          "width": 0,
+          "description": "<SIGNAL_DESCRIPTION>"
+        }
+      ]
+    }
+  ],
+  "registers": [
+    {
+      "name": "<REGISTER_NAME>",
+      "offset": "<HEX_OFFSET>",
+      "width": 0,
+      "access": "<RW|RO|WO|W1C>",
+      "reset_value": "<HEX_RESET_VALUE>",
+      "fields": [
+        {
+          "name": "<FIELD_NAME>",
+          "bits": "<BIT_RANGE>",
+          "access": "<RW|RO|WO|W1C>",
+          "description": "<FIELD_DESCRIPTION>",
+          "encoding_note": "<OPTIONAL_ENCODING_NOTE>"
+        }
+      ]
+    }
+  ],
+  "fsm_summary": [
+    {
+      "name": "<FSM_NAME>",
+      "module": "<RTL_MODULE_NAME>",
+      "state_register": "<STATE_REG_SIGNAL>",
+      "states": ["<STATE_NAME>"],
+      "reset_state": "<RESET_STATE_NAME>",
+      "description": "<FSM_DESCRIPTION>"
+    }
+  ],
+  "macros": [
+    {
+      "name": "<MACRO_NAME>",
+      "value": "<MACRO_VALUE>",
+      "source": "<RTL|Spec|derived>",
+      "verification_impact": "<IMPACT_DESCRIPTION>"
+    }
+  ],
+  "clock_reset": {
+    "clock_name": "<CLOCK_SIGNAL>",
+    "clock_freq_mhz": 0,
+    "reset_name": "<RESET_SIGNAL>",
+    "reset_polarity": "<active_low|active_high>",
+    "reset_type": "<synchronous|asynchronous>"
+  },
+  "error_conditions": [
+    {
+      "name": "<ERROR_NAME>",
+      "trigger": "<TRIGGER_CONDITION>",
+      "flag_register": "<FLAG_REG_AND_BIT>",
+      "handling": "<DUT_BEHAVIOR>"
+    }
+  ],
+  "mismatches": [
+    {
+      "location": "<FILE:LINE>",
+      "description": "<MISMATCH_DESCRIPTION>",
+      "severity": "<high|medium|low>",
+      "recommendation": "<ACTION_RECOMMENDATION>"
+    }
+  ]
+}

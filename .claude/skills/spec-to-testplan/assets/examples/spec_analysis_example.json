@@ -1,0 +1,122 @@
+{
+  "design_name": "spi_master",
+  "spec_source": "/path/to/spi_master_spec.pdf",
+  "interfaces": [
+    {
+      "name": "apb_if",
+      "type": "APB",
+      "role": "slave",
+      "signals": [
+        {"name": "PCLK",    "direction": "input",  "width": 1, "description": "APB clock"},
+        {"name": "PRESETn", "direction": "input",  "width": 1, "description": "Active-low reset"},
+        {"name": "PSEL",    "direction": "input",  "width": 1, "description": "APB slave select"},
+        {"name": "PENABLE", "direction": "input",  "width": 1, "description": "APB enable"},
+        {"name": "PWRITE",  "direction": "input",  "width": 1, "description": "APB write enable"},
+        {"name": "PADDR",   "direction": "input",  "width": 8, "description": "APB address bus"},
+        {"name": "PWDATA",  "direction": "input",  "width": 8, "description": "APB write data"},
+        {"name": "PRDATA",  "direction": "output", "width": 8, "description": "APB read data"},
+        {"name": "PREADY",  "direction": "output", "width": 1, "description": "APB ready"}
+      ]
+    },
+    {
+      "name": "spi_if",
+      "type": "SPI",
+      "role": "master",
+      "signals": [
+        {"name": "SCLK", "direction": "output", "width": 1, "description": "SPI clock output"},
+        {"name": "MOSI", "direction": "output", "width": 1, "description": "Master Out Slave In"},
+        {"name": "MISO", "direction": "input",  "width": 1, "description": "Master In Slave Out"},
+        {"name": "SS_n", "direction": "output", "width": 1, "description": "Slave select, active low"}
+      ]
+    }
+  ],
+  "registers": [
+    {
+      "name": "ctrl_reg",
+      "offset": "0x00",
+      "width": 8,
+      "access": "RW",
+      "reset_value": "0x00",
+      "fields": [
+        {
+          "name": "spi_enable",
+          "bits": "[0]",
+          "access": "RW",
+          "description": "SPI master enable: 1=enabled, 0=disabled"
+        },
+        {
+          "name": "cpol",
+          "bits": "[1]",
+          "access": "RW",
+          "description": "Clock polarity: 0=idle low, 1=idle high"
+        },
+        {
+          "name": "cpha",
+          "bits": "[2]",
+          "access": "RW",
+          "description": "Clock phase: 0=sample on leading edge, 1=sample on trailing edge"
+        },
+        {
+          "name": "clk_div",
+          "bits": "[5:3]",
+          "access": "RW",
+          "description": "Clock divider select: 000=div2, 001=div4, ..., 111=div256"
+        }
+      ]
+    },
+    {
+      "name": "data_reg",
+      "offset": "0x04",
+      "width": 8,
+      "access": "RW",
+      "reset_value": "0x00",
+      "fields": [
+        {
+          "name": "tx_rx_data",
+          "bits": "[7:0]",
+          "access": "RW",
+          "description": "Write to transmit, read to get received data"
+        }
+      ]
+    }
+  ],
+  "fsm_summary": [
+    {
+      "name": "spi_fsm",
+      "module": "spi_master_core",
+      "state_register": "state",
+      "states": ["IDLE", "TRANSFER", "DONE"],
+      "reset_state": "IDLE",
+      "description": "SPI transfer FSM. Shifts 8 bits out on MOSI while sampling MISO, controlled by CPOL/CPHA settings."
+    }
+  ],
+  "macros": [
+    {"name": "DATA_WIDTH", "value": "8",    "source": "RTL", "verification_impact": "8-bit data path width"},
+    {"name": "ADDR_WIDTH", "value": "8",    "source": "RTL", "verification_impact": "8-bit address bus"},
+    {"name": "CTRL_REG",   "value": "'h00", "source": "RTL", "verification_impact": "Control register address"},
+    {"name": "DATA_REG",   "value": "'h04", "source": "RTL", "verification_impact": "Data register address"}
+  ],
+  "clock_reset": {
+    "clock_name": "PCLK",
+    "clock_freq_mhz": 50,
+    "reset_name": "PRESETn",
+    "reset_polarity": "active_low",
+    "reset_type": "asynchronous"
+  },
+  "error_conditions": [
+    {
+      "name": "transfer_underrun",
+      "trigger": "New write to data_reg while previous transfer still active",
+      "flag_register": "ctrl_reg[7] (busy flag, read-only)",
+      "handling": "New write ignored, busy flag remains asserted until current transfer completes"
+    }
+  ],
+  "mismatches": [
+    {
+      "location": "spi_master_core.sv:45",
+      "description": "MISO sampled on negedge SCLK regardless of CPHA setting in RTL, but spec states sampling edge depends on CPHA.",
+      "severity": "high",
+      "recommendation": "Verify RTL CPHA behavior against spec. May need RTL fix or testplan update."
+    }
+  ]
+}

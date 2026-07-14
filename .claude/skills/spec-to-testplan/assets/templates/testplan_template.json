@@ -1,0 +1,28 @@
+{
+  "design_name": "<DESIGN_NAME>",
+  "version": "1.0",
+  "scenarios": [
+    {
+      "id": "FUNC_001",
+      "group": "Basic_TX",
+      "name": "example_basic_operation",
+      "description": "Verify basic operation with default configuration. This is an example scenario to show the expected format.",
+      "priority": "P0",
+      "preconditions": ["DUT reset applied", "Default configuration registers"],
+      "steps": [
+        "1. Apply reset",
+        "2. Perform operation with default settings",
+        "3. Observe output",
+        "4. Compare with expected result"
+      ],
+      "expected_result": "Output matches expected behavior defined in spec.",
+      "coverage_intent": ["<COVERPOINT_NAME>", "<COVERGROUP_NAME>"],
+      "assertion_intent": ["<ASSERTION_NAME>"],
+      "status": "not_covered",
+      "covered_by": null,
+      "vseq": null,
+      "source_files": [],
+      "review_note": "Describe what a human reviewer should verify for this scenario."
+    }
+  ]
+}
