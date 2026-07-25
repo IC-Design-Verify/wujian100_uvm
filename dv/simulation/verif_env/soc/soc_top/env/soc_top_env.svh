@@ -89,8 +89,8 @@ function void soc_top_env::build_phase(uvm_phase phase);
 
   //agent exists or not
   if (env_cfg.has_ahb_agent) begin
-    uvm_config_db#(ahb_cfg)::set(this, "ahb1_env.mst_agent", "cfg", env_cfg.ahb_master_cfg);
-    uvm_config_db#(ahb_cfg)::set(this, "ahb1_env.slv_agent", "cfg", env_cfg.ahb_slave_cfg);
+    uvm_config_db#(ahb_cfg)::set(this, "ahb_env.mst_agent", "cfg", env_cfg.ahb_master_cfg);
+    uvm_config_db#(ahb_cfg)::set(this, "ahb_env.slv_agent", "cfg", env_cfg.ahb_slave_cfg);
     ahb_env = ahb_environment::type_id::create("ahb_env", this);
   end
 

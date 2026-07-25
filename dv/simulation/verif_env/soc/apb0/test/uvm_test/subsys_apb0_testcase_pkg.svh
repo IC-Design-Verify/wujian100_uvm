@@ -24,5 +24,6 @@
 `include "apb0_wdt/apb0_wdt_testcase_pkg.svh"
 `include "apb0_pwm/apb0_pwm_testcase_pkg.svh"
 `include "apb0_usi/apb0_usi_testcase_pkg.svh"
+`include "apb0_tim/apb0_tim_testcase_pkg.svh"
 
 `endif

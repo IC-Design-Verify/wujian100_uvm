@@ -91,14 +91,19 @@ class ahb_driver extends uvm_driver #(ahb_seq_item);
       addr_key.put(1); // unlock addr pipeline
 
       // drive/sample data
+      // NOTE: hrdata must be sampled AFTER wait_ready() returns (i.e. at the
+      // posedge where hready==1). Sampling before wait_ready captures stale
+      // data from the previous transaction on multi-cycle reads — the DUT
+      // updates hrdata in the same cycle that hready is asserted.
       if(req.kind == WRITE) begin
         vif.hwdata  <= req.data[0];
+        wait_ready();  // wait for data accepted
       end else begin
+        wait_ready();  // wait for data accepted — hrdata now valid
         req.data = new[1];
         req.data[0] = vif.hrdata;
       end // if
-      
-      wait_ready();  // wait for data accepted
+
       req.resp = hresp_e'(vif.hresp);
       seq_item_port.put(req); // return updated req as response
       `info_high($sformatf("Done item: %s", req.convert2string()))
@@ -113,7 +118,7 @@ class ahb_driver extends uvm_driver #(ahb_seq_item);
       // get next item from sqr
       seq_item_port.get_next_item(rsp);
       `info_high($sformatf("Rcvd rsp item: %s", rsp.convert2string()))
-      
+
       if(rsp.busy[0] > 0) begin
         `info_high($sformatf("insert %0d busy cycles", rsp.busy[0]))
         vif.hready <= FALSE;
@@ -122,7 +127,12 @@ class ahb_driver extends uvm_driver #(ahb_seq_item);
 
       vif.hready <= TRUE;
       vif.hresp  <= rsp.resp;
-      if(rsp.kind == READ) vif.hrdata <= rsp.data[0];
+      // When the cmd address falls inside the configured DUT-owned range,
+      // the slave VIP must NOT drive hrdata — the DUT's AHB-to-APB bridge
+      // (or other master) is responsible for providing read data, and
+      // driving hrdata here would create a multi-driver conflict.
+      if(rsp.kind == READ && !cfg.addr_in_filter(rsp.addr))
+        vif.hrdata <= rsp.data[0];
       wait_cycle();
       seq_item_port.item_done();
     end // forever

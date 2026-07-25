@@ -1,0 +1,501 @@
+{
+  "design_name": "apb0_tim0",
+  "version": "1.0",
+  "created": "2026-04-28",
+  "rtl_source": "wujian100_open/soc/tim.v",
+  "base_address": "0x5000_0000",
+  "bus": "APB",
+  "timers": 2,
+  "timer_width": 32,
+  "scenarios": [
+    {
+      "id": "TIM_FUNC_001",
+      "group": "Timer_Function",
+      "name": "timer1_free_run_unmasked",
+      "description": "Timer1 free-running mode with unmasked interrupt. Load count = 0x100, mode=0 (free-run), intmask=0, ena=1. Poll TIMER1INTST until bit[0]=1 (interrupt fires). Read TIMER1EOI to clear. Verify TIMER1CV after EOI.",
+      "priority": "P0",
+      "preconditions": ["DUT out of reset", "APB bus idle"],
+      "steps": [
+        "1. Write TIMER1LC(0x00) = 0x0000_0100",
+        "2. Wait >= 1 APB cycle for write to latch",
+        "3. Write TIMER1CR(0x08) = 5'b00001 (mode=0, intmask=0, ena=1)",
+        "4. Poll TIMER1INTST(0x10) bit[0] until == 1",
+        "5. Read TIMER1EOI(0x0C) — clears interrupt",
+        "6. Read TIMER1CV(0x04) — verify counter is near MAX (free-run reload)"
+      ],
+      "expected_result": "TIMER1INTST[0] transitions from 0→1. TIMER1EOI read returns 1 (acknowledged). No UVM_ERROR from checker.",
+      "coverage_intent": ["cg_tim_ctrl[free-run, unmasked]", "cg_tim_int_status[t1_pending, unmasked]"],
+      "assertion_intent": ["a_atzero_one_shot", "a_intst_clear_after_eoi"],
+      "status": "covered",
+      "covered_by": "soc_apb0_tim_smoke_v_sequence::Scenario 1",
+      "vseq": "soc_apb0_tim_smoke_v_sequence",
+      "test": "apb0_tim_smoke_test",
+      "source_files": [
+        "dv/simulation/verif_env/soc/apb0/sequence/apb0_tim/soc_apb0_tim_vseq.svh",
+        "dv/simulation/verif_env/soc/apb0/test/uvm_test/apb0_tim/apb0_tim_testcase.svh"
+      ],
+      "review_note": "Pulse-extended interrupt (TIMER1_PULSE_EXTD=1) widens atzero by 1 cycle; verify checker models this correctly."
+    },
+    {
+      "id": "TIM_FUNC_002",
+      "group": "Timer_Function",
+      "name": "timer1_user_mode_masked",
+      "description": "Timer1 user-defined mode with interrupt masked. Load=0x40, mode=1, intmask=1. Poll INTST with short timeout (5000 polls) — expect timeout (INTST stays 0). Verifies mask correctly suppresses interrupt.",
+      "priority": "P0",
+      "preconditions": ["DUT out of reset", "APB bus idle"],
+      "steps": [
+        "1. Write TIMER1LC(0x00) = 0x0000_0040",
+        "2. Wait >= 1 APB cycle",
+        "3. Write TIMER1CR(0x08) = 5'b00101 (mode=1, intmask=1, ena=1)",
+        "4. Poll TIMER1INTST(0x10) with max_polls=5000",
+        "5. Expect poll to timeout (int_fired_t0 == 0)"
+      ],
+      "expected_result": "Poll returns 0 (timeout). Checker verifies INTST read always returns 0 when mask=1.",
+      "coverage_intent": ["cg_tim_ctrl[user-mode, masked]", "cg_tim_int_status[t1_masked]"],
+      "assertion_intent": [],
+      "status": "covered",
+      "covered_by": "soc_apb0_tim_smoke_v_sequence::Scenario 2",
+      "vseq": "soc_apb0_tim_smoke_v_sequence",
+      "test": "apb0_tim_smoke_test",
+      "source_files": [
+        "dv/simulation/verif_env/soc/apb0/sequence/apb0_tim/soc_apb0_tim_vseq.svh"
+      ],
+      "review_note": "5000 polls may be insufficient at very slow AHB clock. Adjust max_polls if test runs on slow sim."
+    },
+    {
+      "id": "TIM_FUNC_003",
+      "group": "Timer_Function",
+      "name": "timer1_user_mode_unmasked",
+      "description": "Timer1 user-mode unmasked after disable-reload sequence. Disable timer → wait → reload with load=0x20, enable in user-mode unmasked → poll until interrupt fires.",
+      "priority": "P0",
+      "preconditions": ["DUT out of reset", "APB bus idle"],
+      "steps": [
+        "1. Write TIMER1CR(0x08) = 5'b00000 (disable)",
+        "2. Wait 200ns for quiescence",
+        "3. Write TIMER1LC(0x00) = 0x0000_0020",
+        "4. Wait >= 1 APB cycle",
+        "5. Write TIMER1CR(0x08) = 5'b00011 (mode=1, intmask=0, ena=1)",
+        "6. Poll TIMER1INTST(0x10) until == 1",
+        "7. Read TIMER1EOI(0x0C)"
+      ],
+      "expected_result": "TIMER1INTST[0] reaches 1. Checker verifies count-down-to-zero interrupt in user-mode.",
+      "coverage_intent": ["cg_tim_ctrl[user-mode, unmasked, after_disable]"],
+      "assertion_intent": ["a_load_after_en"],
+      "status": "covered",
+      "covered_by": "soc_apb0_tim_smoke_v_sequence::Scenario 3",
+      "vseq": "soc_apb0_tim_smoke_v_sequence",
+      "test": "apb0_tim_smoke_test",
+      "source_files": [
+        "dv/simulation/verif_env/soc/apb0/sequence/apb0_tim/soc_apb0_tim_vseq.svh"
+      ],
+      "review_note": "Sequence explicitly disables then reloads to verify load_count is latched only on CR write, not transparent."
+    },
+    {
+      "id": "TIM_FUNC_004",
+      "group": "Timer_Function",
+      "name": "timer2_free_run_unmasked",
+      "description": "Timer2 free-running mode, independent of timer1. Load=0x80, mode=0, intmask=0, ena=1.",
+      "priority": "P0",
+      "preconditions": ["DUT out of reset", "APB bus idle"],
+      "steps": [
+        "1. Write TIMER2LC(0x14) = 0x0000_0080",
+        "2. Wait >= 1 APB cycle",
+        "3. Write TIMER2CR(0x1C) = 5'b00001 (mode=0, intmask=0, ena=1)",
+        "4. Poll TIMER2INTST(0x24) until == 1",
+        "5. Read TIMER2EOI(0x20)"
+      ],
+      "expected_result": "TIMER2INTST[0] reaches 1. EOI clears it. No impact on timer1 state.",
+      "coverage_intent": ["cg_tim_ctrl[free-run, unmasked, t2]"],
+      "assertion_intent": [],
+      "status": "covered",
+      "covered_by": "soc_apb0_tim_smoke_v_sequence::Scenario 4",
+      "vseq": "soc_apb0_tim_smoke_v_sequence",
+      "test": "apb0_tim_smoke_test",
+      "source_files": [
+        "dv/simulation/verif_env/soc/apb0/sequence/apb0_tim/soc_apb0_tim_vseq.svh"
+      ],
+      "review_note": "Timer2 starts after timer1 scenarios — verifies timers operate independently."
+    },
+    {
+      "id": "TIM_INT_001",
+      "group": "Timer_Integration",
+      "name": "combined_registers_readback",
+      "description": "Read combined interrupt status registers after both timers have been exercised. Verify TIMERSINTST(0xA0), TIMERSEOI(0xA4), TIMERSRAW(0xA8) values.",
+      "priority": "P0",
+      "preconditions": ["Timer1 and timer2 have been started and at least one interrupt has fired"],
+      "steps": [
+        "1. Read TIMERSINTST(0xA0) — should reflect pending/acked state of both timers",
+        "2. Read TIMERSEOI(0xA4) — clears both timer interrupts",
+        "3. Read TIMERSRAW(0xA8) — should reflect raw interrupt before masking"
+      ],
+      "expected_result": "Register read values match expected combined state. No checker mismatches.",
+      "coverage_intent": ["cg_tim_readback[TIMERSINTST, TIMERSEOI, TIMERSRAW]"],
+      "assertion_intent": [],
+      "status": "covered",
+      "covered_by": "soc_apb0_tim_smoke_v_sequence::Scenario 5",
+      "vseq": "soc_apb0_tim_smoke_v_sequence",
+      "test": "apb0_tim_smoke_test",
+      "source_files": [
+        "dv/simulation/verif_env/soc/apb0/sequence/apb0_tim/soc_apb0_tim_vseq.svh"
+      ],
+      "review_note": "RTL: TIMERSINTST = ri_timer_int & ~intmask; TIMERSRAW = ri_timer_int (unmasked)."
+    },
+    {
+      "id": "TIM_REG_001",
+      "group": "Register",
+      "name": "default_value_after_reset",
+      "description": "After reset, read all readable registers and verify they match reset values. CR=0, INTST=0, LC=0, CV=0xFFFFFFFF (timer disabled → CV from {WIDTH{1'b1}}).",
+      "priority": "P1",
+      "preconditions": ["DUT just released from reset"],
+      "steps": [
+        "1. Read TIMER1LC(0x00) → expect 0x0000_0000",
+        "2. Read TIMER1CV(0x04) → expect 0xFFFFFFFF (timer disabled → timer={WIDTH{1'b1}})",
+        "3. Read TIMER1CR(0x08) → expect 0x0000_0000",
+        "4. Read TIMER1INTST(0x10) → expect 0x0000_0000",
+        "5. Repeat for timer2 registers",
+        "6. Read TIMERSINTST(0xA0) → expect 0x0000_0000",
+        "7. Read TIMERSRAW(0xA8) → expect 0x0000_0000"
+      ],
+      "expected_result": "All registers match reset defaults.",
+      "coverage_intent": ["cg_tim_readback[all_registers_reset]"],
+      "assertion_intent": [],
+      "status": "covered",
+      "covered_by": "soc_apb0_tim_reg_v_sequence::TIM_REG_001",
+      "vseq": "soc_apb0_tim_reg_v_sequence",
+      "test": "apb0_tim_reg_test",
+      "source_files": [
+        "dv/simulation/verif_env/soc/apb0/sequence/apb0_tim/soc_apb0_tim_reg_vseq.svh",
+        "dv/simulation/verif_env/soc/apb0/test/uvm_test/apb0_tim/apb0_tim_testcase.svh"
+      ],
+      "review_note": "RTL: timer defaults to {WIDTH{1'b1}} when disabled. CV output only driven when timer_en=1."
+    },
+    {
+      "id": "TIM_REG_002",
+      "group": "Register",
+      "name": "load_count_write_readback",
+      "description": "Write known values to TIMER1LC/TIMER2LC, then read back via TIMERSINTST or re-read after EOI to verify load value latches correctly.",
+      "priority": "P1",
+      "preconditions": ["DUT out of reset"],
+      "steps": [
+        "1. Write TIMER1LC(0x00) = 0xDEAD_BEEF",
+        "2. Write TIMER1LC(0x00) = 0xCAFE_BABE (overwrite)",
+        "3. Read back via internal reference — should be 0xCAFE_BABE",
+        "4. Enable timer, wait for interrupt, verify timer reloaded from last write value"
+      ],
+      "expected_result": "Timer counts down from 0xCAFE_BABE and interrupts at the right count.",
+      "coverage_intent": ["cg_tim_load_value[overwrite, 32-bit patterns]"],
+      "assertion_intent": [],
+      "status": "covered",
+      "covered_by": "soc_apb0_tim_reg_v_sequence::TIM_REG_002",
+      "vseq": "soc_apb0_tim_reg_v_sequence",
+      "test": "apb0_tim_reg_test",
+      "source_files": [
+        "dv/simulation/verif_env/soc/apb0/sequence/apb0_tim/soc_apb0_tim_reg_vseq.svh",
+        "dv/simulation/verif_env/soc/apb0/test/uvm_test/apb0_tim/apb0_tim_testcase.svh"
+      ],
+      "review_note": "LC is W-only in RTL but has internal register. Verify no read path leakage."
+    },
+    {
+      "id": "TIM_REG_003",
+      "group": "Register",
+      "name": "control_register_all_bit_combinations",
+      "description": "Write each combination of {hwen, intmask, mode, ena} to TIMER1CR and TIMER2CR, verify readback. 16 combinations per timer.",
+      "priority": "P1",
+      "preconditions": ["DUT out of reset"],
+      "steps": [
+        "1. For i in 0..15: Write TIMER1CR = i (4 lower bits)",
+        "2. Read TIMER1CR → verify equals i",
+        "3. Repeat for TIMER2CR",
+        "4. Note: bit[3] is reserved, should read 0"
+      ],
+      "expected_result": "CR readback matches last write (excluding reserved bit).",
+      "coverage_intent": ["cg_tim_ctrl[all 16 combinations]"],
+      "assertion_intent": [],
+      "status": "covered",
+      "covered_by": "soc_apb0_tim_reg_v_sequence::TIM_REG_003",
+      "vseq": "soc_apb0_tim_reg_v_sequence",
+      "test": "apb0_tim_reg_test",
+      "source_files": [
+        "dv/simulation/verif_env/soc/apb0/sequence/apb0_tim/soc_apb0_tim_reg_vseq.svh",
+        "dv/simulation/verif_env/soc/apb0/test/uvm_test/apb0_tim/apb0_tim_testcase.svh"
+      ],
+      "review_note": "Timer must be disabled (ena=0) before changing mode to avoid glitches."
+    },
+    {
+      "id": "TIM_REG_004",
+      "group": "Register",
+      "name": "eoi_self_clear",
+      "description": "Read TIMER1EOI, verify interrupt clears, then read EOI again to verify it returns 0 (not sticky).",
+      "priority": "P1",
+      "preconditions": ["Timer1 interrupt has fired and is latched"],
+      "steps": [
+        "1. Poll TIMER1INTST → verify == 1",
+        "2. Read TIMER1EOI(0x0C) → returns 1 (interrupt was pending)",
+        "3. Read TIMER1INTST → expect 0",
+        "4. Read TIMER1EOI again → expect 0"
+      ],
+      "expected_result": "EOI first read = 1, then 0. INTST cleared after first EOI read.",
+      "coverage_intent": ["cg_tim_eoi_clear[t1_eoi]"],
+      "assertion_intent": ["a_intst_clear_after_eoi"],
+      "status": "covered",
+      "covered_by": "soc_apb0_tim_reg_v_sequence::TIM_REG_004",
+      "vseq": "soc_apb0_tim_reg_v_sequence",
+      "test": "apb0_tim_reg_test",
+      "source_files": [
+        "dv/simulation/verif_env/soc/apb0/sequence/apb0_tim/soc_apb0_tim_reg_vseq.svh",
+        "dv/simulation/verif_env/soc/apb0/test/uvm_test/apb0_tim/apb0_tim_testcase.svh"
+      ],
+      "review_note": "RTL: timer1eoi_ren used to clear timer_int_tmp via timereoi path."
+    },
+    {
+      "id": "TIM_REG_005",
+      "group": "Register",
+      "name": "timers_eoi_combined_clear",
+      "description": "Read TIMERSEOI(0xA4) — clears both timer interrupts simultaneously.",
+      "priority": "P1",
+      "preconditions": ["Both timer1 and timer2 interrupts are latched"],
+      "steps": [
+        "1. Verify TIMER1INTST[0] == 1 and TIMER2INTST[0] == 1",
+        "2. Read TIMERSEOI(0xA4)",
+        "3. Read TIMER1INTST → expect 0",
+        "4. Read TIMER2INTST → expect 0"
+      ],
+      "expected_result": "Both INTST bits clear after single TIMERSEOI read.",
+      "coverage_intent": ["cg_tim_eoi_clear[timers_eoi]"],
+      "assertion_intent": [],
+      "status": "covered",
+      "covered_by": "soc_apb0_tim_reg_v_sequence::TIM_REG_005",
+      "vseq": "soc_apb0_tim_reg_v_sequence",
+      "test": "apb0_tim_reg_test",
+      "source_files": [
+        "dv/simulation/verif_env/soc/apb0/sequence/apb0_tim/soc_apb0_tim_reg_vseq.svh",
+        "dv/simulation/verif_env/soc/apb0/test/uvm_test/apb0_tim/apb0_tim_testcase.svh"
+      ],
+      "review_note": "RTL: timerseoi_ren clears timer_int_tmp[i] for both i=0,1."
+    },
+    {
+      "id": "TIM_BOUND_001",
+      "group": "Boundary",
+      "name": "load_count_equals_1",
+      "description": "Timer with load_count=1 triggers after 1 clock cycle of counting (fastest possible). Verifies atzero timing boundary.",
+      "priority": "P1",
+      "preconditions": ["DUT out of reset"],
+      "steps": [
+        "1. Write TIMER1LC = 0x0000_0001",
+        "2. Write TIMER1CR = 0x0001 (enable free-run unmasked)",
+        "3. Poll TIMER1INTST with short timeout",
+        "4. Expect interrupt fires very quickly (1 count cycle)"
+      ],
+      "expected_result": "Interrupt fires within a few poll iterations.",
+      "coverage_intent": ["cg_tim_load_value[boundary_1]"],
+      "assertion_intent": ["a_load_after_en", "a_atzero_one_shot"],
+      "status": "covered",
+      "covered_by": "soc_apb0_tim_bound_v_sequence::TIM_BOUND_001",
+      "vseq": "soc_apb0_tim_bound_v_sequence",
+      "test": "apb0_tim_bound_test",
+      "source_files": [
+        "dv/simulation/verif_env/soc/apb0/sequence/apb0_tim/soc_apb0_tim_bound_vseq.svh",
+        "dv/simulation/verif_env/soc/apb0/test/uvm_test/apb0_tim/apb0_tim_testcase.svh"
+      ],
+      "review_note": "Free-run reload to MAX after reaching 0; user-mode reloads from load_count=1 repeatedly."
+    },
+    {
+      "id": "TIM_BOUND_002",
+      "group": "Boundary",
+      "name": "load_count_max_0xFFFFFFFF",
+      "description": "Load count = 0xFFFFFFFF (maximum). In free-run mode (mode=0), timer starts from load_value, counts to 0, reloads to MAX — effectively identical behavior. In user-mode, reloads from 0xFFFFFFFF.",
+      "priority": "P1",
+      "preconditions": ["DUT out of reset"],
+      "steps": [
+        "1. Write TIMER1LC = 0xFFFF_FFFF",
+        "2. Write TIMER1CR = 0x0001 (free-run, unmasked)",
+        "3. Poll — expect very long delay or overflow",
+        "4. Verify TIMER1CV shows decrementing values on read"
+      ],
+      "expected_result": "CV decreases monotonically. Interrupt fires after 0xFFFFFFFF+1 cycles (or never in practice for P0 — this is a P1 long-running test).",
+      "coverage_intent": ["cg_tim_load_value[boundary_max]"],
+      "assertion_intent": [],
+      "status": "covered",
+      "covered_by": "soc_apb0_tim_bound_v_sequence::TIM_BOUND_002",
+      "vseq": "soc_apb0_tim_bound_v_sequence",
+      "test": "apb0_tim_bound_test",
+      "source_files": [
+        "dv/simulation/verif_env/soc/apb0/sequence/apb0_tim/soc_apb0_tim_bound_vseq.svh",
+        "dv/simulation/verif_env/soc/apb0/test/uvm_test/apb0_tim/apb0_tim_testcase.svh"
+      ],
+      "review_note": "Long-running test truncated to 200ns wait; checks CV decrement and CR readback bits rather than full MAX+1 cycle wait."
+    },
+    {
+      "id": "TIM_BOUND_003",
+      "group": "Boundary",
+      "name": "load_count_zero",
+      "description": "Timer with load_count=0 in user-mode: counts from 0 → atzero fires immediately on next cycle.",
+      "priority": "P1",
+      "preconditions": ["DUT out of reset"],
+      "steps": [
+        "1. Write TIMER1LC = 0x0000_0000",
+        "2. Write TIMER1CR = 0x0003 (user-mode, unmasked, ena=1)",
+        "3. Poll TIMER1INTST",
+        "4. Expect interrupt after 1-2 cycles"
+      ],
+      "expected_result": "Timer fires almost immediately; atzero fires on first clock edge after enable.",
+      "coverage_intent": ["cg_tim_load_value[boundary_zero]"],
+      "assertion_intent": ["a_atzero_one_shot"],
+      "status": "covered",
+      "covered_by": "soc_apb0_tim_bound_v_sequence::TIM_BOUND_003",
+      "vseq": "soc_apb0_tim_bound_v_sequence",
+      "test": "apb0_tim_bound_test",
+      "source_files": [
+        "dv/simulation/verif_env/soc/apb0/sequence/apb0_tim/soc_apb0_tim_bound_vseq.svh",
+        "dv/simulation/verif_env/soc/apb0/test/uvm_test/apb0_tim/apb0_tim_testcase.svh"
+      ],
+      "review_note": "RTL: load_value is latched, timer==0 check fires before decrement; verify no infinite loop."
+    },
+    {
+      "id": "TIM_INT_002",
+      "group": "Timer_Interrupt",
+      "name": "mask_toggle_at_runtime",
+      "description": "Start timer unmasked, wait for interrupt to fire and latch, then write intmask=1, verify INTST clears, then write intmask=0, verify pending interrupt is visible again.",
+      "priority": "P1",
+      "preconditions": ["DUT out of reset"],
+      "steps": [
+        "1. Enable timer1 free-run unmasked (load=0x100)",
+        "2. Poll until INTST == 1 (interrupt fired)",
+        "3. Write TIMER1CR with intmask=1, ena=1",
+        "4. Read TIMER1INTST → expect 0 (masked)",
+        "5. Write TIMER1CR with intmask=0, ena=1",
+        "6. Read TIMER1INTST → expect 1 (pending still latched)"
+      ],
+      "expected_result": "INTST toggles with mask setting; raw TIMERSRAW remains 1 throughout.",
+      "coverage_intent": ["cg_tim_int_status[mask_toggle]"],
+      "assertion_intent": [],
+      "status": "covered",
+      "covered_by": "soc_apb0_tim_bound_v_sequence::TIM_INT_002",
+      "vseq": "soc_apb0_tim_bound_v_sequence",
+      "test": "apb0_tim_bound_test",
+      "source_files": [
+        "dv/simulation/verif_env/soc/apb0/sequence/apb0_tim/soc_apb0_tim_bound_vseq.svh",
+        "dv/simulation/verif_env/soc/apb0/test/uvm_test/apb0_tim/apb0_tim_testcase.svh"
+      ],
+      "review_note": "RTL: intmask gates ri_timer_int → ri_timer1intstatus, does not clear timer_int_tmp. Known limitation: checker predict_read does not gate INTST by mask, may flag spurious mismatches."
+    },
+    {
+      "id": "TIM_INT_003",
+      "group": "Timer_Interrupt",
+      "name": "disable_clears_latch",
+      "description": "While timer1 interrupt is pending (INTST==1), write CR ena=0 → verify timer_int_tmp clears immediately (INTST becomes 0).",
+      "priority": "P1",
+      "preconditions": ["Timer1 interrupt fired and INTST == 1"],
+      "steps": [
+        "1. Verify TIMER1INTST[0] == 1",
+        "2. Write TIMER1CR = 0x0000 (ena=0)",
+        "3. Read TIMER1INTST → expect 0",
+        "4. Read TIMERSRAW → verify raw interrupt state"
+      ],
+      "expected_result": "INTST clears on disable. RAW may remain depending on timer_frc internal state.",
+      "coverage_intent": ["cg_tim_int_status[disable_clear]"],
+      "assertion_intent": [],
+      "status": "covered",
+      "covered_by": "soc_apb0_tim_bound_v_sequence::TIM_INT_003",
+      "vseq": "soc_apb0_tim_bound_v_sequence",
+      "test": "apb0_tim_bound_test",
+      "source_files": [
+        "dv/simulation/verif_env/soc/apb0/sequence/apb0_tim/soc_apb0_tim_bound_vseq.svh",
+        "dv/simulation/verif_env/soc/apb0/test/uvm_test/apb0_tim/apb0_tim_testcase.svh"
+      ],
+      "review_note": "RTL: timeren[i]==0 path clears timer_int_tmp[i]. Re-enable restarts counting from full reload."
+    },
+    {
+      "id": "TIM_CONC_001",
+      "group": "Concurrency",
+      "name": "dual_timer_independent_operation",
+      "description": "Both timers started with different load values simultaneously; verify each timer fires interrupts independently and EOI clears only its own interrupt.",
+      "priority": "P1",
+      "preconditions": ["DUT out of reset"],
+      "steps": [
+        "1. Write TIMER1LC = 0x20, TIMER2LC = 0x40",
+        "2. Enable both: TIMER1CR = TIMER2CR = 0x0001 (free-run, unmasked)",
+        "3. Poll TIMERSINTST → verify bits[1:0] become 1",
+        "4. Read TIMER1EOI → verify TIMER1INTST clears but TIMER2INTST stays",
+        "5. Read TIMER2EOI → verify both INTST are 0"
+      ],
+      "expected_result": "Timers operate independently; EOI is per-timer. TIMERSEOI clears both.",
+      "coverage_intent": ["cg_tim_int_status[dual_concurrent]"],
+      "assertion_intent": [],
+      "status": "covered",
+      "covered_by": "soc_apb0_tim_concur_v_sequence::TIM_CONC_001",
+      "vseq": "soc_apb0_tim_concur_v_sequence",
+      "test": "apb0_tim_conc_test",
+      "source_files": [
+        "dv/simulation/verif_env/soc/apb0/sequence/apb0_tim/soc_apb0_tim_concur_vseq.svh",
+        "dv/simulation/verif_env/soc/apb0/test/uvm_test/apb0_tim/apb0_tim_testcase.svh"
+      ],
+      "review_note": "Uses user-mode (mode=1) with different load values to verify dual-timer independence and shared TIMERSINTST/TIMERSEOI registers."
+    },
+    {
+      "id": "TIM_CONC_002",
+      "group": "Concurrency",
+      "name": "frequent_readback_during_countdown",
+      "description": "While both timers are counting down, continuously read TIMER1CV and TIMER2CV via AHB; verify monotonic decrement on each read.",
+      "priority": "P2",
+      "preconditions": ["Both timers enabled and counting"],
+      "steps": [
+        "1. Enable both timers with small load values",
+        "2. In a loop, read CV of both timers",
+        "3. Compare successive reads — each should be <= previous read",
+        "4. Verify no read returns 0 while timer is still counting"
+      ],
+      "expected_result": "CV values monotonically decrease for each timer independently.",
+      "coverage_intent": ["cg_tim_readback[cv_monotonic]"],
+      "assertion_intent": [],
+      "status": "not_covered",
+      "covered_by": null,
+      "vseq": null,
+      "source_files": [],
+      "review_note": "P2 priority — useful for toggling coverage of 32-bit CV register."
+    },
+    {
+      "id": "TIM_ERR_001",
+      "group": "Error",
+      "name": "undefined_address_read_returns_zero",
+      "description": "Read from undefined APB offsets (0x28, 0x30, 0x3C) within tim0 address space. RTL default case returns prdata=0.",
+      "priority": "P2",
+      "preconditions": ["DUT out of reset"],
+      "steps": [
+        "1. Read address 0x5000_0028",
+        "2. Verify prdata == 0x0000_0000",
+        "3. Read address 0x5000_0030",
+        "4. Verify prdata == 0x0000_0000"
+      ],
+      "expected_result": "All undefined offset reads return 0.",
+      "coverage_intent": ["cg_tim_readback[undefined_address]"],
+      "assertion_intent": [],
+      "status": "not_covered",
+      "covered_by": null,
+      "vseq": null,
+      "source_files": [],
+      "review_note": "RTL: default case in prdata mux assigns 0."
+    },
+    {
+      "id": "TIM_ERR_003",
+      "group": "Error",
+      "name": "consecutive_write_overwrite",
+      "description": "Write LC/CR with value A, then immediately write value B. Verify only value B takes effect.",
+      "priority": "P2",
+      "preconditions": ["DUT out of reset"],
+      "steps": [
+        "1. Write TIMER1LC = 0xAAAA_BBBB",
+        "2. Write TIMER1LC = 0x5555_6666",
+        "3. Enable timer, verify countdown starts from 0x5555_6666"
+      ],
+      "expected_result": "Timer loads from most recent LC write (0x5555_6666).",
+      "coverage_intent": ["cg_tim_load_value[overwrite]"],
+      "assertion_intent": [],
+      "status": "not_covered",
+      "covered_by": null,
+      "vseq": null,
+      "source_files": [],
+      "review_note": "Simple sanity check for register write path."
+    }
+  ]
+}
