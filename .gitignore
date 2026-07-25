@@ -1,0 +1,8 @@
+novas*
+*.log
+hierarchy.txt
+csrc*
+simv*
+*fsdb
+ucli*
+vc_hdrs.h
