@@ -87,7 +87,6 @@ class ahb_driver extends uvm_driver #(ahb_seq_item);
       //if(!seq_item_port.has_do_available()) begin
       //  do_mst_idle();
       //end // if
-      if(prefetch_fifo.used() == 0) do_mst_idle();
       addr_key.put(1); // unlock addr pipeline
 
       // drive/sample data
@@ -119,20 +118,25 @@ class ahb_driver extends uvm_driver #(ahb_seq_item);
       seq_item_port.get_next_item(rsp);
       `info_high($sformatf("Rcvd rsp item: %s", rsp.convert2string()))
 
-      if(rsp.busy[0] > 0) begin
-        `info_high($sformatf("insert %0d busy cycles", rsp.busy[0]))
-        vif.hready <= FALSE;
-        repeat(rsp.busy[0]) wait_cycle();
-      end // if
+      if(!cfg.addr_filter_en) begin
+        if(rsp.busy[0] > 0) begin
+          `info_high($sformatf("insert %0d busy cycles", rsp.busy[0]))
+          vif.hready <= FALSE;
+          repeat(rsp.busy[0]) wait_cycle();
+        end // if
 
-      vif.hready <= TRUE;
-      vif.hresp  <= rsp.resp;
-      // When the cmd address falls inside the configured DUT-owned range,
-      // the slave VIP must NOT drive hrdata — the DUT's AHB-to-APB bridge
-      // (or other master) is responsible for providing read data, and
-      // driving hrdata here would create a multi-driver conflict.
-      if(rsp.kind == READ && !cfg.addr_in_filter(rsp.addr))
-        vif.hrdata <= rsp.data[0];
+        vif.hready <= TRUE;
+        vif.hresp  <= rsp.resp;
+        // When the cmd address falls inside the configured DUT-owned range,
+        // the slave VIP must NOT drive hrdata — the DUT's AHB-to-APB bridge
+        // (or other master) is responsible for providing read data, and
+        // driving hrdata here would create a multi-driver conflict.
+        if(rsp.kind == READ)
+          vif.hrdata <= rsp.data[0];
+      end
+      // When addr_filter_en is TRUE, the RTL provides hready/hresp/hrdata
+      // via continuous assign — the slave VIP only participates in the
+      // handshake (get_next_item / item_done) without driving bus signals.
       wait_cycle();
       seq_item_port.item_done();
     end // forever
@@ -160,9 +164,11 @@ class ahb_driver extends uvm_driver #(ahb_seq_item);
   task do_init();
     `info("initialize bus")
     if(cfg.is_slave) begin
-      vif.hrdata <= '0;
-      vif.hresp  <= OKAY;
-      vif.hready <= TRUE;
+      if(!cfg.addr_filter_en) begin
+        vif.hrdata <= '0;
+        vif.hresp  <= OKAY;
+        vif.hready <= TRUE;
+      end
     end else begin
       vif.hmastlock <= FALSE;
       vif.hsel      <= TRUE;

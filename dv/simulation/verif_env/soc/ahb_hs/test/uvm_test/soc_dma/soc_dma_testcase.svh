@@ -16,39 +16,117 @@ class soc_dma_base_test extends soc_top_test_base;
 endclass : soc_dma_base_test
 
 
+// DMA-001: Register R/W test
+class soc_dma_reg_test extends soc_dma_base_test;
+  `uvm_component_utils(soc_dma_reg_test)
+
+  function new(string name = "soc_dma_reg_test", uvm_component parent=null);
+    super.new(name,parent);
+  endfunction: new
+
+  virtual task main_phase(uvm_phase phase);
+    soc_dma_reg_v_sequence vseq;
+    super.main_phase(phase);
+    vseq = soc_dma_reg_v_sequence::type_id::create("vseq", this);
+    phase.raise_objection(this);
+    vseq.start(m_env.soc_top_vsqr);
+    phase.drop_objection(this);
+  endtask
+endclass
+
+
+// DMA-002: Single channel SRAM→SRAM transfer
+class soc_dma_xfer_test extends soc_dma_base_test;
+  `uvm_component_utils(soc_dma_xfer_test)
+
+  function new(string name = "soc_dma_xfer_test", uvm_component parent=null);
+    super.new(name,parent);
+  endfunction: new
+
+  virtual task main_phase(uvm_phase phase);
+    soc_dma_xfer_v_sequence vseq;
+    super.main_phase(phase);
+    vseq = soc_dma_xfer_v_sequence::type_id::create("vseq", this);
+    phase.raise_objection(this);
+    vseq.start(m_env.soc_top_vsqr);
+    phase.drop_objection(this);
+  endtask
+endclass
+
+
+// DMA-003: Multi-channel concurrent transfer
+class soc_dma_concur_test extends soc_dma_base_test;
+  `uvm_component_utils(soc_dma_concur_test)
+
+  function new(string name = "soc_dma_concur_test", uvm_component parent=null);
+    super.new(name,parent);
+  endfunction: new
+
+  virtual task main_phase(uvm_phase phase);
+    soc_dma_concur_v_sequence vseq;
+    super.main_phase(phase);
+    vseq = soc_dma_concur_v_sequence::type_id::create("vseq", this);
+    phase.raise_objection(this);
+    vseq.start(m_env.soc_top_vsqr);
+    phase.drop_objection(this);
+  endtask
+endclass
+
+
+// DMA-004/005/007: Interrupt tests
+class soc_dma_int_test extends soc_dma_base_test;
+  `uvm_component_utils(soc_dma_int_test)
+
+  function new(string name = "soc_dma_int_test", uvm_component parent=null);
+    super.new(name,parent);
+  endfunction: new
+
+  virtual task main_phase(uvm_phase phase);
+    soc_dma_int_v_sequence vseq;
+    super.main_phase(phase);
+    vseq = soc_dma_int_v_sequence::type_id::create("vseq", this);
+    phase.raise_objection(this);
+    vseq.start(m_env.soc_top_vsqr);
+    phase.drop_objection(this);
+  endtask
+endclass
+
+
+// DMA-008/009/010/011/013/014: Misc tests
+class soc_dma_misc_test extends soc_dma_base_test;
+  `uvm_component_utils(soc_dma_misc_test)
+
+  function new(string name = "soc_dma_misc_test", uvm_component parent=null);
+    super.new(name,parent);
+  endfunction: new
+
+  virtual task main_phase(uvm_phase phase);
+    soc_dma_misc_v_sequence vseq;
+    super.main_phase(phase);
+    vseq = soc_dma_misc_v_sequence::type_id::create("vseq", this);
+    phase.raise_objection(this);
+    vseq.start(m_env.soc_top_vsqr);
+    phase.drop_objection(this);
+  endtask
+endclass
+
+
+// DMA Smoke: Combined P0 tests
 class soc_dma_smoke_test extends soc_dma_base_test;
   `uvm_component_utils(soc_dma_smoke_test)
 
-  /** Class Constructor */
   function new(string name = "soc_dma_smoke_test", uvm_component parent=null);
     super.new(name,parent);
   endfunction: new
 
   virtual task main_phase(uvm_phase phase);
-    soc_soc_dma_smoke_virtual_sequence    soc_dma_seq;
+    soc_soc_dma_smoke_virtual_sequence vseq;
     super.main_phase(phase);
-    soc_dma_seq= soc_soc_dma_smoke_virtual_sequence::type_id::create("soc_dma_seq", this);
+    vseq = soc_soc_dma_smoke_virtual_sequence::type_id::create("vseq", this);
     phase.raise_objection(this);
-    soc_dma_seq.start(m_env.soc_top_vsqr);
+    vseq.start(m_env.soc_top_vsqr);
     phase.drop_objection(this);
   endtask
 endclass
 
-//class soc_dma_txt_test extends soc_ahb_vip_run_with_txt_test;
-//  `uvm_component_utils(soc_dma_txt_test)
-//
-//  /** Class Constructor */
-//  function new(string name = "soc_dma_txt_test", uvm_component parent=null);
-//    super.new(name,parent);
-//  endfunction: new
-//
-//  virtual task main_phase(uvm_phase phase);
-//    soc_soc_dma_smoke_virtual_sequence    soc_dma_seq;
-//    super.main_phase(phase);
-//    soc_dma_seq= soc_soc_dma_smoke_virtual_sequence::type_id::create("soc_dma_seq", this);
-//    phase.raise_objection(this);
-//    soc_dma_seq.start(m_env.soc_top_vsqr);
-//    phase.drop_objection(this);
-//  endtask
-//endclass
 `endif

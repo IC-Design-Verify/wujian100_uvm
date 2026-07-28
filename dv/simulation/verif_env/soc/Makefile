@@ -14,7 +14,7 @@ export LIGHT_ROOT := $(shell pwd)
 C_TEST = timer/timer_test.c
 
 ifeq ($(findstring dma_test, ${C_TEST}), dma_test)
-  DEF =
+  DEF = USE_AHB_HS+USE_SOC_DMA
 else ifeq ($(findstring gpio_test, ${C_TEST}), gpio_test)
   DEF = USE_APB1+USE_APB1_GPIO
 else ifeq ($(findstring usi_spi_test, ${C_TEST}), usi_spi_test)
@@ -34,6 +34,7 @@ endif
 all: comp run
 all_vip: comp_vip run_vip
 all_vip_dpi: comp_vip run_vip_dpi
+all_vip_dma: comp_vip run_vip_dma
 
 ccomp:
 	./script/make_hex $(C_TEST)
@@ -67,6 +68,9 @@ run: ccomp
 
 run_vip:
 	./simv -l simv.log +UVM_TESTNAME=soc_top_smoke_test
+
+run_vip_dma:
+	./simv -l simv_$(DMA_TEST).log +UVM_TESTNAME=$(DMA_TEST)
 
 run_vip_dpi: vipccomp
 	./simv -l simv.log +UVM_TESTNAME=soc_top_vip_run_with_c_test -sv_lib test_start

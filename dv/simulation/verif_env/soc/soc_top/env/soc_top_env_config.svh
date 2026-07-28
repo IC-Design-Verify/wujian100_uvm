@@ -67,7 +67,23 @@ function soc_top_env_config::new(string name="soc_top_env_config");
   ahb_slave_cfg  = ahb_cfg::type_id::create("ahb_slave_cfg");
   `check_rand(ahb_master_cfg.randomize())
   `check_rand(ahb_slave_cfg .randomize())
-        
+
+  // In USE_AHB_VIP_TO_REPLACE mode, the AHB master VIP issues all CPU-initiated
+  // transactions through the real SoC AHB matrix (soc_top_interface_assignment.sv
+  // forces cpu_hmain0_m0_* from `soc_top_ahb_vif`). Real hardware slaves
+  // (ISRAM/DSRAM/DMA-slave/APB) drive `hmain0_cpu_m0_hrdata` back to the VIP.
+  // The slave VIP agent runs `ahb_slv_resp_seq` and would also drive `hrdata`
+  // on `soc_top_ahb_vif` for every READ — creating a multi-driver conflict on
+  // the same net (random garbage like 0xdbaacfca was observed).
+  //
+  // Enable addr_filter on the slave VIP covering the *entire* 32-bit address
+  // space so `ahb_driver::do_slv_ahb_trans` always skips driving `hrdata`
+  // (see ahb_driver.svh line 134: `if(rsp.kind == READ && !cfg.addr_in_filter(rsp.addr))`).
+  // The slave VIP still drives `hready`/`hresp`, so the bus protocol is intact;
+  // the real SoC slave provides `hrdata`.
+  ahb_slave_cfg.addr_filter_en = 1'b1;
+  ahb_slave_cfg.addr_lo        = 32'h0000_0000;
+  ahb_slave_cfg.addr_hi        = 32'hFFFF_FFFF;
 endfunction: new
 
 function soc_top_env_config::config_env(string name="SOC_TOP");

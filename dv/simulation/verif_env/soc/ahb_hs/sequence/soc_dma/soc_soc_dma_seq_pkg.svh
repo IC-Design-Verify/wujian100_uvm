@@ -4,7 +4,7 @@
   //import uvm_pkg::*;
   //import soc_top_vseq_lib_pkg::*;
   //import svt_uvm_pkg::*;
-  //import svt_ahb_uvm_pkg::*;    
+  //import svt_ahb_uvm_pkg::*;
   //import svt_ahb_sequence_pkg::*;
   import ahb_pkg::*;
 
@@ -12,6 +12,7 @@
   `include "soc_subsys_ahb_hs_seq_pkg.svh"
 
   //
+  `include "soc_dma/soc_dma_checker.svh"
   `include "soc_dma/soc_soc_dma_sequence.svh"
   `include "soc_dma/soc_soc_dma_vseq.svh"
 
