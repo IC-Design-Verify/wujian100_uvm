@@ -15689,7 +15689,7 @@ always@(posedge  hclk or negedge hrst_n)   begin
         cntr_grup[5:0] <= 6'b0 ;
     end
     else  if( cntr_grup_rlden )
-        cntr_grup[5:0] <= #1 (chregc_fsmc_group_len[5:0]+1'b1) - dst_trbyt[2:0]  ;
+        cntr_grup[5:0] <= #1 (chregc_fsmc_group_len[5:0]+1'b1) * dst_trbyt[2:0]  ;
     else if( cntr_grup_decen )
         cntr_grup[5:0] <= #1 cntr_grup[5:0] - dst_trbyt[2:0] ;
 end
@@ -15714,7 +15714,7 @@ always@(posedge  hclk or negedge hrst_n)   begin
     else  if( cntr_blk_decen  )
         cntr_blk[12:0] <=  cntr_blk[12:0] - dst_trbyt[2:0] ;
     else if( cntr_blk_rlden )
-        cntr_blk[12:0] <= chregc_fsmc_block_tl_plus[12:0] - {10'b0,dst_trbyt[2:0]} ;
+        cntr_blk[12:0] <= chregc_fsmc_block_tl_plus[12:0] * dst_trbyt[2:0] ;
 end
 assign   blk_nu_eql0 = ( ~ (|cntr_blk[12:0]) ) ;
 assign   blk_nu_last1 =  ( ~ (| (cntr_blk[12:0])) ) & is_wr_ctrlstt;
