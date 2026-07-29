@@ -154,6 +154,22 @@ class soc_dma_ref_model extends uvm_object;
     endcase
   endfunction
 
+  // Returns 1 if addr points to a register whose read value is dynamic
+  // (set by HW, not just by APB writes) or write-only (no read side-effect).
+  // The checker skips comparison for these addresses.
+  function bit is_dynamic_or_wonly(bit[31:0] addr);
+    int ch;
+    bit[5:0] offset;
+    // Global CHSR — derived from busy status, not en[]
+    if (addr[15:0] == 16'h0338) return 1'b1;
+    decode_addr(addr[9:0], ch, offset);
+    if (ch < 0) return 1'b0;
+    case (offset)
+      6'h14, 6'h18, 6'h1C, 6'h20: return 1'b1;  // INT_STATUS / INT_CLEAR / SOFT_REQ / EN
+      default: return 1'b0;
+    endcase
+  endfunction
+
   // Hardware event: set int_status bit for a channel (called by vseq after
   // detecting a transfer completion in DUT).
   function void set_int_status(input int ch, input bit[4:0] bits);
@@ -202,19 +218,11 @@ class soc_dma_checker extends uvm_object;
     bit[31:0] expected;
     expected = refm.predict_read(addr);
 
-    // Skip checking SOFT_REQ (W-only) and INT_CLEAR (W-only) and INT_STATUS
-    // (dynamic — set by HW, not by model writes alone)
-    case (addr[7:0])
-      8'h18, 8'h1C, 8'h14: begin
-        `uvm_info("DMA_CHK_SKIP",
-          $sformatf("skip dynamic/W-only @0x%08h: actual=0x%08h", addr, actual), UVM_HIGH)
-        return;
-      end
-    endcase
-    // Skip EN read — may auto-clear during transfer (dynamic)
-    if (addr[7:0] == 8'h20) begin
+    // Skip dynamic / write-only registers (INT_STATUS, INT_CLEAR, SOFT_REQ,
+    // EN, CHSR) — their read value depends on HW state, not just APB writes.
+    if (refm.is_dynamic_or_wonly(addr)) begin
       `uvm_info("DMA_CHK_SKIP",
-        $sformatf("skip EN @0x%08h: actual=0x%08h", addr, actual), UVM_HIGH)
+        $sformatf("skip dynamic/W-only @0x%08h: actual=0x%08h", addr, actual), UVM_HIGH)
       return;
     end
     // Skip CHSR read — derived from chNc_gbc_chbsy (busy status), not en[]

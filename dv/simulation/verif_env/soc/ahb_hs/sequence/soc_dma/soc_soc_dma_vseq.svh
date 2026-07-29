@@ -50,15 +50,27 @@ class soc_dma_xfer_helper extends soc_soc_dma_sequence;
   endtask
 
   // Full transfer sequence: configure → enable → trigger → wait → verify
+  // expected_pattern controls comparison:
+  //   0 = constant pattern: every word should equal src_pattern_value
+  //   1 = incrementing pattern: word i should equal src_addr + i (only valid
+  //     if the caller pre-filled source with that exact pattern, which the
+  //     stock fill_mem does NOT do — it uses a constant fill value).
   task do_word_xfer(input int ch,
                     input bit[31:0] src_addr,
                     input bit[31:0] dst_addr,
                     input int       word_count,
                     input bit       int_en,
                     input int       timeout_cycles = 100000,
-                    output bit      success);
+                    output bit      success,
+                    input bit[31:0] src_pattern_value = 32'h0,
+                    input bit       use_inc_pattern = 1'b0);
     bit[31:0] data;
     bit fired;
+    bit ch_idle;
+    bit all_arrived;
+    int poll_count;
+    bit[31:0] got_data;
+    bit[31:0] expected;
 
     // Configure
     configure_word_xfer(ch, src_addr, dst_addr, word_count, int_en);
@@ -77,8 +89,50 @@ class soc_dma_xfer_helper extends soc_soc_dma_sequence;
       return;
     end
 
-    // Wait for EN auto-clear
-    #100ns;
+    // Wait for channel idle — EN auto-clears but AHB pipelining may still have
+    // outstanding responses in flight.
+    dma_wait_ch_idle(ch, 100000, ch_idle);
+    if (!ch_idle) begin
+      `uvm_error("DMA_XFER", $sformatf("CH%0d: channel not idle after transfer", ch))
+      success = 1'b0;
+      return;
+    end
+
+    // DMA EN auto-clears when programmed transfers are issued on the bus,
+    // but AHB pipelining means responses may not have returned from SRAM yet.
+    // Since DMA uses SINGLE burst (3'b000), each word needs separate arbitration.
+    // VIP (higher priority) may starve DMA for many cycles. Instead of guessing
+    // a fixed delay, actively poll destination memory until all expected data
+    // arrives (or timeout).
+    //
+    // The expected pattern depends on how the caller pre-filled the source:
+    //   - use_inc_pattern=1: caller wrote src_addr+i into word i of source.
+    //   - use_inc_pattern=0 (default): caller filled source via fill_mem, which
+    //     writes "pattern + i" into word i. So expected word i = src_pattern_value + i.
+    all_arrived = 1'b0;
+    poll_count = 0;
+    while (!all_arrived && poll_count < 50000) begin
+      all_arrived = 1'b1;
+      for (int i = 0; i < word_count; i++) begin
+        mem_read32_(dst_addr + i*4, got_data);
+        if (use_inc_pattern)
+          expected = src_addr + i;
+        else
+          expected = src_pattern_value + i;
+        if (got_data !== expected) begin
+          all_arrived = 1'b0;
+          break;
+        end
+      end
+      poll_count++;
+      if (!all_arrived) #(1us); // wait 1us between polls
+    end
+    if (!all_arrived) begin
+      `uvm_error("DMA_XFER", $sformatf("CH%0d: destination data not arrived after %0d polls", ch, poll_count))
+      success = 1'b0;
+      return;
+    end
+    `uvm_info("DMA_XFER", $sformatf("CH%0d: all %0d words arrived after %0d polls", ch, word_count, poll_count), UVM_LOW)
 
     success = 1'b1;
   endtask
@@ -250,6 +304,7 @@ class soc_dma_xfer_v_sequence extends soc_top_v_sequence_base;
 
     xfer = soc_dma_xfer_helper::type_id::create("xfer", null);
     xfer.set_sequencer(p_sequencer.ahb_mst_sqr);
+    xfer.chk = chk;  // share checker so xfer writes update ref model
 
     #200ns;
 
@@ -269,7 +324,9 @@ class soc_dma_xfer_v_sequence extends soc_top_v_sequence_base;
       .dst_addr(32'h2002_0000),
       .word_count(64),
       .int_en(1'b1),
-      .success(success)
+      .success(success),
+      .src_pattern_value(32'h0000_0001),
+      .use_inc_pattern(1'b0)
     );
 
     if (!success)
@@ -310,7 +367,9 @@ class soc_dma_xfer_v_sequence extends soc_top_v_sequence_base;
       .dst_addr(32'h2001_0000),
       .word_count(32),
       .int_en(1'b0),
-      .success(success)
+      .success(success),
+      .src_pattern_value(32'hAAAA_0000),
+      .use_inc_pattern(1'b0)
     );
 
     if (!success)
@@ -333,7 +392,9 @@ class soc_dma_xfer_v_sequence extends soc_top_v_sequence_base;
       .dst_addr(32'h2000_0000),
       .word_count(256),
       .int_en(1'b1),
-      .success(success)
+      .success(success),
+      .src_pattern_value(32'h1111_0000),
+      .use_inc_pattern(1'b0)
     );
 
     if (!success)
@@ -385,6 +446,7 @@ class soc_dma_concur_v_sequence extends soc_top_v_sequence_base;
 
     xfer = soc_dma_xfer_helper::type_id::create("xfer", null);
     xfer.set_sequencer(p_sequencer.ahb_mst_sqr);
+    xfer.chk = chk;  // share checker so xfer writes update ref model
 
     #200ns;
 
@@ -477,6 +539,7 @@ class soc_dma_int_v_sequence extends soc_top_v_sequence_base;
 
     xfer = soc_dma_xfer_helper::type_id::create("xfer", null);
     xfer.set_sequencer(p_sequencer.ahb_mst_sqr);
+    xfer.chk = chk;  // share checker so xfer writes update ref model
 
     #200ns;
 
@@ -618,6 +681,7 @@ class soc_dma_misc_v_sequence extends soc_top_v_sequence_base;
 
     xfer = soc_dma_xfer_helper::type_id::create("xfer", null);
     xfer.set_sequencer(p_sequencer.ahb_mst_sqr);
+    xfer.chk = chk;  // share checker so xfer writes update ref model
 
     #200ns;
 
@@ -703,7 +767,17 @@ class soc_dma_misc_v_sequence extends soc_top_v_sequence_base;
 
     xfer.fill_mem(32'h0000_A000, 4, 32'hBBBB_0000);
 
-    xfer.do_word_xfer(6, 32'h0000_A000, 32'h2002_0000, 4, 1'b0, 100000, success);
+    xfer.do_word_xfer(
+      .ch(6),
+      .src_addr(32'h0000_A000),
+      .dst_addr(32'h2002_0000),
+      .word_count(4),
+      .int_en(1'b0),
+      .timeout_cycles(100000),
+      .success(success),
+      .src_pattern_value(32'hBBBB_0000),
+      .use_inc_pattern(1'b0)
+    );
     if (success) begin
       xfer.check_mem(32'h2002_0000, 4, 32'hBBBB_0000, mismatches);
       if (mismatches == 0)
@@ -806,6 +880,7 @@ class soc_soc_dma_smoke_virtual_sequence extends soc_top_v_sequence_base;
 
     xfer = soc_dma_xfer_helper::type_id::create("xfer", null);
     xfer.set_sequencer(p_sequencer.ahb_mst_sqr);
+    xfer.chk = chk;  // share checker so xfer writes update ref model
 
     #200ns;
 
@@ -815,10 +890,15 @@ class soc_soc_dma_smoke_virtual_sequence extends soc_top_v_sequence_base;
       `uvm_error("DMA_SMOKE", $sformatf("DMACCFG reset exp=0x0 act=0x%08h", rdata))
 
     // 2. Simple transfer: 16 words ISRAM→DSRAM2
+    //    Zero DSRAM2 first: fpga_spram defaults to X for uninitialized cells,
+    //    so any cell not written by DMA returns X. Pre-fill with 0xDEADBEEF
+    //    so check_mem can detect "DMA did not write" vs "DMA wrote wrong data".
+    xfer.fill_mem(32'h2002_0000, 16, 32'hDEAD_BEEF);
     xfer.fill_mem(32'h0000_0800, 16, 32'h0000_0001);
     xfer.dma_global_enable(1);
 
-    xfer.do_word_xfer(0, 32'h0000_0800, 32'h2002_0000, 16, 1'b1, 100000, success);
+    xfer.do_word_xfer(0, 32'h0000_0800, 32'h2002_0000, 16, 1'b1, 100000, success,
+                    .src_pattern_value(32'h0000_0001), .use_inc_pattern(1'b0));
     if (!success) `uvm_error("DMA_SMOKE", "16-word transfer failed")
 
     xfer.check_mem(32'h2002_0000, 16, 32'h0000_0001, mismatches);
