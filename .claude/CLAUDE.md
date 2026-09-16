@@ -26,9 +26,13 @@ dv/simulation/verif_env/soc/
 ├── gate_sim/            # Gate-level simulation
 ├── common/uvc/ahb/      # Custom AHB UVC agent
 ├── c_case/              # C test cases for CPU-driven simulation
+├── env_gen.config       # Master config for UVM env generation (clocks, agents, DUT connects)
 └── script/              # Perl build scripts (make_hex, make_hex_for_vip)
 
 dv/simulation/firmware_ksim/  # Firmware library for C test compilation
+
+doc_summary/           # Peripheral register documentation (Markdown, per-IP: DMA, GPIO, PWM, RTC, TIM, USI, WDT)
+                       # Primary spec input for the spec-to-testplan skill and reference models
 
 wujian100_open/          # DUT RTL submodule (RISC-V SoC)
 ```
@@ -41,13 +45,23 @@ wujian100_open/          # DUT RTL submodule (RISC-V SoC)
 | VIP-driven | `make all_vip` | UVM VIP drives the SoC directly |
 | VIP+DPI | `make all_vip_dpi` | UVM with DPI calls to compiled C tests |
 
+## Environment Setup
+
+```bash
+# Clone with the DUT submodule
+git clone --recurse-submodules https://github.com/IC-Design-Verify/wujian100_uvm.git
+
+# CPU-driven tests need the RISC-V gcc toolchain (riscv64-elf-x86_64-20210512);
+# default path is /common/riscv-toolchain — otherwise edit the tool path in dv/dv.cshrc
+
+# Source environment from the dv/ directory (csh; dv.bashrc also provided)
+cd dv && source dv.cshrc   # or: source dv.bashrc
+cd simulation/verif_env/soc
+```
+
 ## Common Commands
 
 ```bash
-# Source environment (run from dv/simulation/verif_env/soc/)
-cd dv/simulation/verif_env/soc
-source ../path/to/dv.bashrc  # or dv.cshrc for csh/tcsh
-
 # --- CPU-driven simulation ---
 make all                          # compile + run (default timer_test)
 make all C_TEST=timer/timer_test.c  # specific C test
@@ -139,7 +153,6 @@ The project includes these Claude Code skills for UVM verification workflows:
 
 | Skill | Directory | Purpose |
 |-------|-----------|---------|
-| ksim | `.claude/skills/ksim/` | Run UVM simulation with ksim, manage jobs |
 | fsdb-analysis | `.claude/skills/fsdb-analysis/` | FSDB waveform debug, Verdi batch apps |
 | spec-to-testplan | `.claude/skills/spec-to-testplan/` | Spec analysis and testplan generation |
 | testcase-build | `.claude/skills/testcase-build/` | UVM test case and vseq generation |
@@ -172,3 +185,35 @@ The DUT is the `wujian100_open` submodule (XuanTie open-source SoC). RTL files a
 - APB1 peripherals: GPIO, PMU, RTC
 - AHB peripherals: DMA
 - Memory: FPGA SRAM models
+
+## Multi-Agent Collaboration (CCB)
+
+This project uses CCB for visible multi-agent collaboration.
+
+### Collaboration
+
+- You are one agent in a CCB-managed project team.
+- Use CCB `ask` for project-level collaboration with configured agents.
+- Delegate with the goal, scope/files, assumptions, expected output, and verification needs.
+- Reply concisely with findings, changes, verification, blockers, and risks when relevant.
+
+### Role Assignment
+
+抽象角色映射到具体的 CCB 代理。协作时引用角色，实际调用时按下表解析为 `/ask <agent>`。
+
+| Role | Agent | Provider | Description |
+|------|-------|----------|-------------|
+| `coding` | `worker1` / `worker2` / `worker3` / `worker4` | `codex` | 代码编写 — RTL/UVM 验证环境、测试用例、脚本等所有编码任务的实现与修改（多 worker 可并行承接独立编码任务；`coding` 代理自 2026-09-16 起暂停接受任务） |
+| `doc_review` | `doc_review` | `codex` | 审查 — 文档审查与代码审查（质量门：验证计划、测试点、代码 diff 的评审） |
+| `doc-write` | `doc-write` | `codex` | 文档编写 — 验证计划、验证报告、Spec 分析文档、注释说明等文档产出 |
+
+调用方式：`/ask worker1 "..."`（或 worker2/worker3/worker4）/ `/ask doc_review "..."` / `/ask doc-write "..."`（或 shell `command ask <agent>`）。
+
+### 分工规则
+
+- **编码任务**（RTL、UVM 组件、sequence/test、脚本）一律委派 `worker1`~`worker4`，其他角色不代写代码；相互独立的编码任务可并行分给不同 worker。`coding` 代理暂不接受任务。
+- **审查任务**（代码 diff 评审、文档评审）一律委派 `doc_review`；代码合入前必须通过审查。
+- **文档任务**（验证计划、报告、说明文档）一律委派 `doc-write`。
+- 委派时给出：目标、涉及文件/范围、假设、期望输出、验证要求。
+- 某代理不可用时，在任务描述中注明「降级接管」后再委派替代代理，便于追溯。
+- 注意：代理报"无权限/无法访问文件"时先查证工具调用是否真实执行——2026-09-16 曾发生 doc-write tool-call 失败并误诊为权限问题，重启+重新投影配置后恢复。API 分配（2026-09-16 更新）：doc-write=MiniMax-M3 @ api.minimaxi.com，doc_review=glm-5.3 @ api.mlxz.cc（当日切换，见 .ccb/incidents/doc_review-reasoning-fragment-replies-20260916.md），worker1~4=glm-5.3 @ api.mlxz.cc；各代理 pane 相互独立。provider/API 变更后应对该 agent 执行 `ccb clear <agent>` 再验证，旧会话不会自动继承新配置。
