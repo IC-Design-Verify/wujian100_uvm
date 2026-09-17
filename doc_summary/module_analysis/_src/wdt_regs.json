@@ -1,0 +1,169 @@
+{
+  "registers": [
+    {
+      "section": 4,
+      "name": "WDTCR",
+      "meta": {
+        "offset": "0x00000000",
+        "description": "WDT_CR",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:5",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "4:2",
+          "name": "rpl",
+          "access": "R/W",
+          "desc": "系统复位持续 pclk 周期数编码：<br>`000` = 2 pclk; `001` = 4; `010` = 8; `011` = 16; `100` = 32; `101` = 64; `110` = 128; `111` = 256. Reset: `3'b0`",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "rmod",
+          "access": "R/W",
+          "desc": "`0` = Generate a system reset; `1` = First generate an interrupt, then if not cleared before second timeout generate a system reset. Reset: `1'b1`",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "wdt_en",
+          "access": "R/W",
+          "desc": "Once enabled, only cleared by system reset. `0` = WDT disabled; `1` = WDT enabled. Reset: `1'b0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "WDTTIMEOUT",
+      "meta": {
+        "offset": "0x00000004",
+        "description": "WDT_time_out",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:8",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "7:4",
+          "name": "top_init",
+          "access": "R/W",
+          "desc": "**首次** kick 时使用的 timeout period 编码。该字段在 WDT enabled 后才生效；之后 kick 使用 `TOP`。对 32-bit WDT counter，`i = 0..15` 时 timeout period `t = 32'hFFFF`（即 counter 从 `0xFFFF` 起算）。Reset: `4'h0`",
+          "reserved": false
+        },
+        {
+          "bits": "3:0",
+          "name": "top",
+          "access": "R/W",
+          "desc": "后续 kick 使用的 timeout period 编码；变更在下一次 kick 后生效。范围与 `TOP_INIT` 同。Reset: `4'h0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "WDTCURRENTVALUE",
+      "meta": {
+        "offset": "0x00000008",
+        "description": "WDT_current_value",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "current_counter_value",
+          "access": "R",
+          "desc": "内部 32-bit counter 当前值（读取保持一致）。Reset: `32'h0000_FFFF`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "WDTRESTART",
+      "meta": {
+        "offset": "0x0000000c",
+        "description": "WDT_restart",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:8",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "7:0",
+          "name": "counter_restart_register",
+          "access": "W",
+          "desc": "喂狗：必须写 `0x76` 才会重启 counter；同时清除 WDT 中断。读返回 0。Reset: `0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "WDTINTSTATUS",
+      "meta": {
+        "offset": "0x00000010",
+        "description": "WDT_int_status",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:1",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "0",
+          "name": "interrupt_status",
+          "access": "R",
+          "desc": "`1` = Interrupt is active; `0` = Interrupt is inactive. Reset: `0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "WDTINTCLR",
+      "meta": {
+        "offset": "0x00000014",
+        "description": "WDT_int_clr",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:1",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "0",
+          "name": "interrupt_clear",
+          "access": "R",
+          "desc": "读清 WDT 中断；不影响 counter（不喂狗）。Reset: `0`",
+          "reserved": false
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

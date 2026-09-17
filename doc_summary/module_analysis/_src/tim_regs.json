@@ -1,0 +1,283 @@
+{
+  "registers": [
+    {
+      "section": 4,
+      "name": "TIMER1LOADCOUNT",
+      "meta": {
+        "offset": "0x00000000",
+        "description": "Timer1 Load Count",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "timer1_load_count_register",
+          "access": "R/W",
+          "desc": "Value to be loaded into Timer1. This is the value from which counting commences. Any value written to this register is loaded into the associated timer. Reset Value: `32'b0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIMER1CURRENTVALUE",
+      "meta": {
+        "offset": "0x00000004",
+        "description": "Timer1 Current Value",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "timer1_current_value_register",
+          "access": "R",
+          "desc": "Current Value of Timer1. Reset Value: `32'b0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIMER1CONTROLREG",
+      "meta": {
+        "offset": "0x00000008",
+        "description": "Timer1 Control Reg",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:5",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "4",
+          "name": "timer_hardware_trigger_enable",
+          "access": "R/W",
+          "desc": "`0` = timer hardware trigger disable; `1` = timer hardware trigger enable",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "2",
+          "name": "timer_interrupt_mask",
+          "access": "R/W",
+          "desc": "`0` = timer interrupt not masked; `1` = timer interrupt masked. Reset Value: `1'b0`",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "timer_mode_select",
+          "access": "R/W",
+          "desc": "`0` = free-running; `1` = user-defined running. Reset Value: `1'b0`",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "timer_enable_select",
+          "access": "R/W",
+          "desc": "`0` = disabled; `1` = enabled. Reset Value: `1'b0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIMER1_INT_CLR",
+      "meta": {
+        "offset": "0x0000000c",
+        "description": "Timer1_int_clr",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:1",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "0",
+          "name": "timer1_int_clr_register",
+          "access": "R",
+          "desc": "Reading from this register returns all zeros (`0`) and clears the interrupt from Timer1",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIMER1INTSTATUS",
+      "meta": {
+        "offset": "0x00000010",
+        "description": "Timer1Int Status",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:1",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "0",
+          "name": "timer1int_status_register",
+          "access": "R",
+          "desc": "Contains the interrupt status for Timer1",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIMER2LOADCOUNT",
+      "meta": {
+        "offset": "0x00000014",
+        "description": "",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "timer2_load_count_register",
+          "access": "R/W",
+          "desc": "Value to be loaded into Timer2. This is the value from which counting commences. Any value written to this register is loaded into the associated timer. Reset Value: `32'b0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIMER2CURRENTVALUE",
+      "meta": {
+        "offset": "0x00000018",
+        "description": "",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "timer2_current_value_register",
+          "access": "R",
+          "desc": "Current Value of Timer2. Reset Value: `32'b0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIMER2CONTROLREG",
+      "meta": {
+        "offset": "0x0000001c",
+        "description": "",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:5",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "4",
+          "name": "timer_hardware_trigger_enable",
+          "access": "R/W",
+          "desc": "`0` = timer hardware trigger disable; `1` = timer hardware trigger enable",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "2",
+          "name": "timer_interrupt_mask",
+          "access": "R/W",
+          "desc": "`0` = timer interrupt not masked; `1` = timer interrupt masked. Reset Value: `1'b0`",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "timer_mode_select",
+          "access": "R/W",
+          "desc": "`0` = free-running; `1` = user-defined running. Reset Value: `1'b0`",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "timer_enable_select",
+          "access": "R/W",
+          "desc": "`0` = disabled; `1` = enabled. Reset Value: `1'b0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIMER2_INT_CLR",
+      "meta": {
+        "offset": "0x00000020",
+        "description": "",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:1",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "0",
+          "name": "timer2_int_clr_register",
+          "access": "R",
+          "desc": "Reading from this register returns all zeros (`0`) and clears the interrupt from Timer2",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIMER2INTSTATUS",
+      "meta": {
+        "offset": "0x00000024",
+        "description": "",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:1",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "0",
+          "name": "timer2int_status_register",
+          "access": "R",
+          "desc": "Contains the interrupt status for Timer2",
+          "reserved": false
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

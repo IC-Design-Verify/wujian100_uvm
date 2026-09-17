@@ -1,0 +1,469 @@
+{
+  "registers": [
+    {
+      "section": 4,
+      "name": "SARn",
+      "meta": {
+        "offset": "0x00000000",
+        "description": "SARn",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "sarn",
+          "access": "R/W",
+          "desc": "`SARn[31:0]` — Channel n Source read Address. Reset Value: `0x0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "DARn",
+      "meta": {
+        "offset": "0x00000004",
+        "description": "DARn",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "darn",
+          "access": "R/W",
+          "desc": "`DARn[31:0]` — Channel n Destination write Address. Reset Value: `0x0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CHn_CTRL_A",
+      "meta": {
+        "offset": "0x00000008",
+        "description": "CHn_CTRL_A",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:24",
+          "name": "",
+          "access": "R/W",
+          "desc": "Reserved",
+          "reserved": true
+        },
+        {
+          "bits": "23:12",
+          "name": "block_tl",
+          "access": "R/W",
+          "desc": "`BLOCK_TL[11:0]` — Block Transfer Length. Must be written before the channel is enabled. Bytes total number = `BLOCK_TL + 1`; maximum = 4096 bytes. Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "11:8",
+          "name": "",
+          "access": "R/W",
+          "desc": "Reserved",
+          "reserved": true
+        },
+        {
+          "bits": "7:6",
+          "name": "sinc",
+          "access": "R/W",
+          "desc": "`SINC[1:0]` — Source Address Increment. `00` = increment; `01` = decrease; `1x` = no change. Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "5:4",
+          "name": "dinc",
+          "access": "R/W",
+          "desc": "`DINC[1:0]` — Destination Address Increment. `00` = increment; `01` = decrease; `1x` = no change. Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "3:2",
+          "name": "src_tr_width",
+          "access": "R/W",
+          "desc": "`SRC_TR_WIDTH[1:0]` — Source Transfer Width (mapped to AHB `hsize`). `00` = 8-bit; `01` = 16-bit; `10` = 32-bit; `11` = reserved. Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "1:0",
+          "name": "dst_tr_width",
+          "access": "R/W",
+          "desc": "`DST_TR_WIDTH[1:0]` — Destination Transfer Width (mapped to AHB `hsize`). Same encoding as `SRC_TR_WIDTH`. Reset: `0x0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CHn_CTRL_B",
+      "meta": {
+        "offset": "0x0000000c",
+        "description": "CHn_CTRL_B",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:19",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved",
+          "reserved": true
+        },
+        {
+          "bits": "18:15",
+          "name": "protctl",
+          "access": "R/W",
+          "desc": "`PROTCTL[3:0]` — Channel n Protection Control; drives AHB `HPROT`. `PROTCTL[2]`: `1` = secure access only; `0` = normal (secure/non-secure both allowed). Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "14",
+          "name": "dstdtlgc",
+          "access": "R/W",
+          "desc": "`DSTDTLGC` — Destination Write data endian change. `0` = little-endian; `1` = big-endian. Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "13",
+          "name": "srcdtlgc",
+          "access": "R/W",
+          "desc": "`SRCDTLGC` — Source read data endian change. `0` = little-endian; `1` = big-endian. Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "12:3",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved",
+          "reserved": true
+        },
+        {
+          "bits": "2:1",
+          "name": "trgtmdc",
+          "access": "R/W",
+          "desc": "`TRGTMDC[1:0]` — Trigger transfer mode. `2'b00` = reserved; `2'b01` = reserved; `2'b1x` = **Block trigger mode** (must be set to `2'b10` or `2'b11`). Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "int_en",
+          "access": "R/W",
+          "desc": "`INT_EN` — Interrupt Enable. `0` = all interrupt sources disabled; `1` = all enabled. Reset: `0x0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CHn_INT_MASK",
+      "meta": {
+        "offset": "0x00000010",
+        "description": "CHn_INT_MASK",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "3",
+          "name": "masktrgetcmpfr",
+          "access": "R/W",
+          "desc": "`masktrgetcmpfr` — Mask for trigger event complete interrupt. `0` = mask; `1` = not mask. Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "maskhtfr",
+          "access": "R/W",
+          "desc": "`maskhtfr` — Mask for transfer half complete interrupt. `0` = mask; `1` = not mask. Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "masktfr",
+          "access": "R/W",
+          "desc": "`masktfr` — Mask for transfer complete interrupt. `0` = mask; `1` = not mask. Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "maskerr",
+          "access": "R/W",
+          "desc": "`maskErr` — Mask for transfer error interrupt. `0` = mask; `1` = not mask. Reset: `0x0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CHn_INT_STATUS",
+      "meta": {
+        "offset": "0x00000014",
+        "description": "CHn_INT_STATUS",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "3",
+          "name": "statustrgetcmpfr",
+          "access": "R",
+          "desc": "`statustrgetcmpfr` — Status for trigger event complete. Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "statushtfr",
+          "access": "R",
+          "desc": "`statushtfr` — Status for half-of-block-length transfer complete. Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "statustfr",
+          "access": "R",
+          "desc": "`statustfr` — Status for block-length transfer complete. Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "statuserr",
+          "access": "R",
+          "desc": "`statusErr` — Status for transfer error (only detects AHB `HRESP` error). Reset: `0x0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CHn_INT_CLEAR",
+      "meta": {
+        "offset": "0x00000018",
+        "description": "CHn_INT_CLEAR",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "3",
+          "name": "cleartrgetcmpfr",
+          "access": "W",
+          "desc": "`cleartrgetcmpfr` — Clear `statustrgetcmpif`. `0` = no clear; `1` = clear. Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "clearhtfr",
+          "access": "W",
+          "desc": "`clearhtfr` — Clear `statushtfr`. `0` = no clear; `1` = clear. Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "cleartfr",
+          "access": "W",
+          "desc": "`cleartfr` — Clear `statustfr`. `0` = no clear; `1` = clear. Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "clearerr",
+          "access": "W",
+          "desc": "`clearErr` — Clear `statusErr`. `0` = no clear; `1` = clear. Reset: `0x0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CHn_SOFT_REQ",
+      "meta": {
+        "offset": "0x0000001c",
+        "description": "CHn_SOFT_REQ",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "0",
+          "name": "soft_req",
+          "access": "W",
+          "desc": "`soft_req` — Software Request. Reset: `0x0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CHn_EN",
+      "meta": {
+        "offset": "0x00000020",
+        "description": "CHn_EN",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "0",
+          "name": "chn_en",
+          "access": "R/W",
+          "desc": "`chn_en` — Channel n Enable. When set to `1`, `DARn`/`SARn`/`CHn_CTRL_A`/`CHn_CTRL_B` cannot be modified. Reset: `0x0`. After transfer is over, this bit is auto-cleared to `0` by hardware.",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CHSR",
+      "meta": {
+        "offset": "0x00000338",
+        "description": "CHSR",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "23:16",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved",
+          "reserved": true
+        },
+        {
+          "bits": "15",
+          "name": "ch15bsy",
+          "access": "R",
+          "desc": "`Ch15bsy` — Channel 15 busy (owns data bus)",
+          "reserved": false
+        },
+        {
+          "bits": "14",
+          "name": "ch14bsy",
+          "access": "R",
+          "desc": "`Ch14bsy`",
+          "reserved": false
+        },
+        {
+          "bits": "13",
+          "name": "ch13bsy",
+          "access": "R",
+          "desc": "`ch12bsy`（User Guide 拼写为 ch12bsy 但对应 bit13 = Channel 13）；注：UG 原文误拼为 ch12bsy，按 bit13 修正为 ch13bsy",
+          "reserved": false
+        },
+        {
+          "bits": "12",
+          "name": "ch12bsy",
+          "access": "R",
+          "desc": "`Ch12bsy`",
+          "reserved": false
+        },
+        {
+          "bits": "11",
+          "name": "ch11bsy",
+          "access": "R",
+          "desc": "`Ch11bsy`",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "ch10bsy",
+          "access": "R",
+          "desc": "`ch10bsy`",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "ch9bsy",
+          "access": "R",
+          "desc": "`Ch9bsy`",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "ch8bsy",
+          "access": "R",
+          "desc": "`Ch8bsy`",
+          "reserved": false
+        },
+        {
+          "bits": "7",
+          "name": "ch7bsy",
+          "access": "R",
+          "desc": "`Ch7bsy`",
+          "reserved": false
+        },
+        {
+          "bits": "6",
+          "name": "ch6bsy",
+          "access": "R",
+          "desc": "`Ch6bsy`",
+          "reserved": false
+        },
+        {
+          "bits": "5",
+          "name": "ch5bsy",
+          "access": "R",
+          "desc": "`Ch5bsy`",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "ch4bsy",
+          "access": "R",
+          "desc": "`Ch4bsy`",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "ch3bsy",
+          "access": "R",
+          "desc": "`Ch3bsy`",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "ch2bsy",
+          "access": "R",
+          "desc": "`ch2bsy`",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "ch1bsy",
+          "access": "R",
+          "desc": "`ch1bsy`",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "ch0bsy",
+          "access": "R",
+          "desc": "`ch0bsy`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "DMACCFG",
+      "meta": {
+        "offset": "0x0000033c",
+        "description": "DMACCFG",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:1",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved",
+          "reserved": true
+        },
+        {
+          "bits": "0",
+          "name": "dmacen",
+          "access": "R/W",
+          "desc": "`DMACEN` — Global DMAC enable. After this bit is set, all channels can work. Reset: `0x0`",
+          "reserved": false
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

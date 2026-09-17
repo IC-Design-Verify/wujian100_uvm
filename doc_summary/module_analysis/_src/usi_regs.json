@@ -1,0 +1,1591 @@
+{
+  "registers": [
+    {
+      "section": 4,
+      "name": "USICTRL",
+      "meta": {
+        "offset": "0x00000000",
+        "description": "USI_CTRL",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:4",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "3",
+          "name": "rx_fifo_en",
+          "access": "R/W",
+          "desc": "RX FIFO enable (`0` = disable; `1` = enable)",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "tx_fifo_en",
+          "access": "R/W",
+          "desc": "TX FIFO enable",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "fm_en",
+          "access": "R/W",
+          "desc": "Function modules (UART/I2C/SPI) enable",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "usi_en",
+          "access": "R/W",
+          "desc": "All modules in USI enable",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "MODESEL",
+      "meta": {
+        "offset": "0x00000004",
+        "description": "MODE_SEL",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:2",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "1:0",
+          "name": "mode_sel",
+          "access": "R/W",
+          "desc": "`00` = UART; `01` = I2C; `10` = SPI; `11` = mode keep the last set value unchanged",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TXFIFO",
+      "meta": {
+        "offset": "0x00000008",
+        "description": "TX_FIFO",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "15:0",
+          "name": "tx_data",
+          "access": "W",
+          "desc": "Transmitting data",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "RXFIFO",
+      "meta": {
+        "offset": "0x00000008",
+        "description": "TX_FIFO",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "15:0",
+          "name": "rx_data",
+          "access": "R",
+          "desc": "Received data",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "FIFOSTA",
+      "meta": {
+        "offset": "0x0000000c",
+        "description": "FIFO_STA",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:20",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "19:16",
+          "name": "rx_num",
+          "access": "R",
+          "desc": "数据字计数（RX FIFO 当前存储数量）",
+          "reserved": false
+        },
+        {
+          "bits": "15:12",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "11:8",
+          "name": "tx_num",
+          "access": "R",
+          "desc": "数据字计数（TX FIFO 当前存储数量）",
+          "reserved": false
+        },
+        {
+          "bits": "7:4",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "3",
+          "name": "rx_full",
+          "access": "R",
+          "desc": "RX FIFO 满",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "rx_empty",
+          "access": "R",
+          "desc": "RX FIFO 空",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "tx_full",
+          "access": "R",
+          "desc": "TX FIFO 满",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "tx_empty",
+          "access": "R",
+          "desc": "TX FIFO 空",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CLKDIV0",
+      "meta": {
+        "offset": "0x00000010",
+        "description": "CLK_DIV0",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:24",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "23:0",
+          "name": "clk_div0",
+          "access": "R/W",
+          "desc": "分频寄存器。<br>UART 模式：Baud rate = `Fpclk / (16 × (CLK_DIV0 + 1))`。<br>I2C 模式：SCL 高电平计数值，`Fscl = Fpclk / (CLK_DIV0 + CLK_DIV1 + 2)`。<br>SPI 模式：`Fsck = Fpclk / CLK_DIV0`（要求 CLK_DIV0 为偶数）。",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CLKDIV1",
+      "meta": {
+        "offset": "0x00000014",
+        "description": "CLK_DIV1",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:24",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "23:0",
+          "name": "clk_div1",
+          "access": "R/W",
+          "desc": "I2C SCL 低电平计数值；UART/SPI 不使用",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "UARTCTRL",
+      "meta": {
+        "offset": "0x00000018",
+        "description": "UART_CTRL",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:6",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "5",
+          "name": "eps",
+          "access": "R/W",
+          "desc": "Even parity select（`0` = odd；`1` = even）；`PEN=1` 时有效",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "pen",
+          "access": "R/W",
+          "desc": "Parity enable",
+          "reserved": false
+        },
+        {
+          "bits": "3:2",
+          "name": "pbit",
+          "access": "R/W",
+          "desc": "停止位数：`00` = 1 stop; `01` = 1.5 stop; `10` = 2 stop; `11` = keep last value",
+          "reserved": false
+        },
+        {
+          "bits": "1:0",
+          "name": "dbit",
+          "access": "R/W",
+          "desc": "数据位：`00` = 5; `01` = 6; `10` = 7; `11` = 8",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "UARTSTA",
+      "meta": {
+        "offset": "0x0000001c",
+        "description": "UART_STA",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:2",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "1",
+          "name": "rxd_work",
+          "access": "R",
+          "desc": "UART RXD 正在接收",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "txd_work",
+          "access": "R",
+          "desc": "UART TXD 正在发送",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "I2CMODE",
+      "meta": {
+        "offset": "0x00000020",
+        "description": "I2C_MODE",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:1",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "0",
+          "name": "ms_mode",
+          "access": "R/W",
+          "desc": "`0` = I2CS 模式；`1` = I2CM 模式",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "I2CADDR",
+      "meta": {
+        "offset": "0x00000024",
+        "description": "I2C_ADDR",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:10",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "9:0",
+          "name": "i2c_addr",
+          "access": "R/W",
+          "desc": "10-bit I2C slave 地址",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "I2CMCTRL",
+      "meta": {
+        "offset": "0x00000028",
+        "description": "I2CM_CTRL",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:5",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "4",
+          "name": "gcall",
+          "access": "R/W",
+          "desc": "首字节是否为 general call 地址；用 general call 须先清 `ADDR_MODE`",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "sbyte",
+          "access": "R/W",
+          "desc": "`1` = generate START byte",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "hs_mode",
+          "access": "R/W",
+          "desc": "高速模式",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "stop",
+          "access": "R/W",
+          "desc": "TX FIFO 空时：`0` = I2CM 保持 SCL 低；`1` = I2CM 产生 STOP",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "addr_mode",
+          "access": "R/W",
+          "desc": "`0` = 7-bit 地址；`1` = 10-bit 地址",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "I2CMCODE",
+      "meta": {
+        "offset": "0x0000002c",
+        "description": "I2CM_CODE",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:3",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "2:0",
+          "name": "mcode",
+          "access": "R/W",
+          "desc": "I2CM 高速模式 master code",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "I2CSCTRL",
+      "meta": {
+        "offset": "0x00000030",
+        "description": "I2CS_CTRL",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:1",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "0",
+          "name": "gcall_mode",
+          "access": "R/W",
+          "desc": "`0` = 接收 general call 数据；`1` = 不接收 general call 数据",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "I2CFMDIV",
+      "meta": {
+        "offset": "0x00000034",
+        "description": "I2C_FM_DIV",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:8",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "7:0",
+          "name": "i2c_fm_div",
+          "access": "R/W",
+          "desc": "I2C fast mode 分频（用于 master code + START byte 传输）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "I2CHOLD",
+      "meta": {
+        "offset": "0x00000038",
+        "description": "I2C_HOLD",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:8",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "7:0",
+          "name": "i2c_hold",
+          "access": "R/W",
+          "desc": "SDA hold time（master/slave 通用）：`T_I2C_HOLD = (I2C_HOLD + 1) × Tpclk`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "I2CSTA",
+      "meta": {
+        "offset": "0x0000003c",
+        "description": "I2C_STA",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:9",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "8",
+          "name": "i2cs_work",
+          "access": "R",
+          "desc": "I2C slave 忙",
+          "reserved": false
+        },
+        {
+          "bits": "7:2",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "1",
+          "name": "i2cm_data",
+          "access": "R",
+          "desc": "I2CM 正在传输数据",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "i2cm_work",
+          "access": "R",
+          "desc": "I2CM 忙",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "SPIMODE",
+      "meta": {
+        "offset": "0x00000040",
+        "description": "SPI_MODE",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:1",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "0",
+          "name": "ms_mode",
+          "access": "R/W",
+          "desc": "`0` = SPI slave；`1` = SPI master",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "SPICTRL",
+      "meta": {
+        "offset": "0x00000044",
+        "description": "SPI_CTRL",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:10",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "9",
+          "name": "nss_ctrl",
+          "access": "R/W",
+          "desc": "NSS 输出控制选择：`0` = NSS_TOGGLE 控制；`1` = NSS_DATA 控制",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "nss_toggle",
+          "access": "R/W",
+          "desc": "`0` = 每个数据帧末尾 toggle；`1` = NSS 一直保持直至 SPI master 停止",
+          "reserved": false
+        },
+        {
+          "bits": "7",
+          "name": "cpol",
+          "access": "R/W",
+          "desc": "Clock polarity：`0` = 空闲 SCK 低；`1` = 空闲 SCK 高",
+          "reserved": false
+        },
+        {
+          "bits": "6",
+          "name": "cpha",
+          "access": "R/W",
+          "desc": "Clock phase：`0` = 第一 bit 中部 toggle；`1` = 第一 bit 起始 toggle",
+          "reserved": false
+        },
+        {
+          "bits": "5:4",
+          "name": "tmod",
+          "access": "R/W",
+          "desc": "Transfer mode：`00` = TR & RX；`01` = TX only；`10` = RX only；`11` = keep last",
+          "reserved": false
+        },
+        {
+          "bits": "3:0",
+          "name": "data_size",
+          "access": "R/W",
+          "desc": "数据帧大小（见下表）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "SPISTA",
+      "meta": {
+        "offset": "0x00000048",
+        "description": "SPI_STA",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:1",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "0",
+          "name": "spi_working",
+          "access": "R",
+          "desc": "SPI master/slave 工作状态",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "INTRCTRL",
+      "meta": {
+        "offset": "0x0000004c",
+        "description": "INTR_CTRL",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:17",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "16",
+          "name": "th_mode",
+          "access": "R/W",
+          "desc": "`1` = not less than threshold；`0` = not larger than threshold",
+          "reserved": false
+        },
+        {
+          "bits": "15:11",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "10:8",
+          "name": "rx_fifo_th",
+          "access": "R/W",
+          "desc": "RX FIFO threshold：`0` = keep；`1` ~ `7` = 1 ~ 7 byte",
+          "reserved": false
+        },
+        {
+          "bits": "7:3",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "2:0",
+          "name": "tx_fifo_th",
+          "access": "R/W",
+          "desc": "TX FIFO threshold：`0` = keep；`1` ~ `7` = 1 ~ 7 byte",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "INTREN",
+      "meta": {
+        "offset": "0x00000050",
+        "description": "INTR_EN",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:19",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "18",
+          "name": "spi_stop_en",
+          "access": "R/W",
+          "desc": "各 bit = 1 时使能对应中断源（`0` = disable, `1` = enable）",
+          "reserved": false
+        },
+        {
+          "bits": "17",
+          "name": "i2c_aerr_en",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "16",
+          "name": "i2cs_gcall_en",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "15",
+          "name": "i2cm_lose_arbi_en",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "14",
+          "name": "i2c_nack_en",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "13",
+          "name": "i2c_stop_en",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "12",
+          "name": "uart_perr_en",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "11",
+          "name": "uart_rx_stop_en",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "uart_tx_stop_en",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "rx_werr_en",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "rx_rerr_en",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "7",
+          "name": "rx_full_en",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "6",
+          "name": "rx_empty_en",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "5",
+          "name": "rx_thold_en",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "tx_werr_en",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "tx_rerr_en",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "tx_full_en",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "tx_empty_en",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "tx_thold_en",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "INTRSTA",
+      "meta": {
+        "offset": "0x00000054",
+        "description": "INTR_STA",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:19",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "18",
+          "name": "spi_stop",
+          "access": "R",
+          "desc": "各 bit 含义与 `RAW_INTR_STA` 同位对应",
+          "reserved": false
+        },
+        {
+          "bits": "17",
+          "name": "i2c_aerr",
+          "access": "R",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "16",
+          "name": "i2cs_gcall",
+          "access": "R",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "15",
+          "name": "i2cm_lose_arbi",
+          "access": "R",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "14",
+          "name": "i2c_nack",
+          "access": "R",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "13",
+          "name": "i2c_stop",
+          "access": "R",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "12",
+          "name": "uart_perr",
+          "access": "R",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "11",
+          "name": "uart_rx_stop",
+          "access": "R",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "uart_tx_stop",
+          "access": "R",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "rx_werr",
+          "access": "R",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "rx_rerr",
+          "access": "R",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "7",
+          "name": "rx_full",
+          "access": "R",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "6",
+          "name": "rx_empty",
+          "access": "R",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "5",
+          "name": "rx_thold",
+          "access": "R",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "tx_werr",
+          "access": "R",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "tx_rerr",
+          "access": "R",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "tx_full",
+          "access": "R",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "tx_empty",
+          "access": "R",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "tx_thold",
+          "access": "R",
+          "desc": "",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "RAWINTRSTA",
+      "meta": {
+        "offset": "0x00000058",
+        "description": "RAW_INTR_STA",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:19",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "18",
+          "name": "raw_spi_stop",
+          "access": "R",
+          "desc": "SPI 停止事件",
+          "reserved": false
+        },
+        {
+          "bits": "17",
+          "name": "raw_i2c_aerr",
+          "access": "R",
+          "desc": "I2C 仲裁/总线错误",
+          "reserved": false
+        },
+        {
+          "bits": "16",
+          "name": "raw_i2cs_gcall",
+          "access": "R",
+          "desc": "I2CS 收到 general call",
+          "reserved": false
+        },
+        {
+          "bits": "15",
+          "name": "raw_i2cm_lose_arbi",
+          "access": "R",
+          "desc": "I2CM 仲裁失败",
+          "reserved": false
+        },
+        {
+          "bits": "14",
+          "name": "raw_i2c_nack",
+          "access": "R",
+          "desc": "I2C NACK",
+          "reserved": false
+        },
+        {
+          "bits": "13",
+          "name": "raw_i2c_stop",
+          "access": "R",
+          "desc": "I2C STOP",
+          "reserved": false
+        },
+        {
+          "bits": "12",
+          "name": "raw_uart_perr",
+          "access": "R",
+          "desc": "UART 校验错",
+          "reserved": false
+        },
+        {
+          "bits": "11",
+          "name": "raw_uart_rx_stop",
+          "access": "R",
+          "desc": "UART RX STOP",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "raw_uart_tx_stop",
+          "access": "R",
+          "desc": "UART TX STOP",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "raw_rx_werr",
+          "access": "R",
+          "desc": "RX FIFO 满后写",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "raw_rx_rerr",
+          "access": "R",
+          "desc": "RX FIFO 空后读",
+          "reserved": false
+        },
+        {
+          "bits": "7",
+          "name": "raw_rx_full",
+          "access": "R",
+          "desc": "RX FIFO 满",
+          "reserved": false
+        },
+        {
+          "bits": "6",
+          "name": "raw_rx_empty",
+          "access": "R",
+          "desc": "RX FIFO 空",
+          "reserved": false
+        },
+        {
+          "bits": "5",
+          "name": "raw_rx_thold",
+          "access": "R",
+          "desc": "RX FIFO 阈值触发（依 `TH_MODE`）",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "raw_tx_werr",
+          "access": "R",
+          "desc": "TX FIFO 满后写",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "raw_tx_rerr",
+          "access": "R",
+          "desc": "TX FIFO 空后读",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "raw_tx_full",
+          "access": "R",
+          "desc": "TX FIFO 满",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "raw_tx_empty",
+          "access": "R",
+          "desc": "TX FIFO 空",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "raw_tx_thold",
+          "access": "R",
+          "desc": "TX FIFO 阈值触发（依 `TH_MODE`）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "INTRUNMASK",
+      "meta": {
+        "offset": "0x0000005c",
+        "description": "INTR_UNMASK",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:19",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "18",
+          "name": "spi_stop_mask",
+          "access": "R/W",
+          "desc": "`0` = masked；`1` = unmasked",
+          "reserved": false
+        },
+        {
+          "bits": "17",
+          "name": "i2c_aerr_mask",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "16",
+          "name": "i2cs_gcall_mask",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "15",
+          "name": "i2cm_lose_arbi_mask",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "14",
+          "name": "i2c_nack_mask",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "13",
+          "name": "i2c_stop_mask",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "12",
+          "name": "uart_perr_mask",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "11",
+          "name": "uart_rx_stop_mask",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "uart_tx_stop_mask",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "rx_werr_mask",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "rx_rerr_mask",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "7",
+          "name": "rx_full_mask",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "6",
+          "name": "rx_empty_mask",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "5",
+          "name": "rx_thold_mask",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "tx_werr_mask",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "tx_rerr_mask",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "tx_full_mask",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "tx_empty_mask",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "tx_thold_mask",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "INTRCLR",
+      "meta": {
+        "offset": "0x00000060",
+        "description": "INTR_CLR",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:19",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "18",
+          "name": "spi_stop_clr",
+          "access": "W",
+          "desc": "Write `1'b1` to clear the corresponding `RAW_*` interrupt",
+          "reserved": false
+        },
+        {
+          "bits": "17",
+          "name": "i2c_aerr_clr",
+          "access": "W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "16",
+          "name": "i2cs_gcall_clr",
+          "access": "W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "15",
+          "name": "i2cm_lose_arbi_clr",
+          "access": "W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "14",
+          "name": "i2c_nack_clr",
+          "access": "W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "13",
+          "name": "i2c_stop_clr",
+          "access": "W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "12",
+          "name": "uart_perr_clr",
+          "access": "W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "11",
+          "name": "uart_rx_stop_clr",
+          "access": "W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "uart_tx_stop_clr",
+          "access": "W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "rx_werr_clr",
+          "access": "W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "rx_rerr_clr",
+          "access": "W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "7",
+          "name": "rx_full_clr",
+          "access": "W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "6",
+          "name": "rx_empty_clr",
+          "access": "W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "5",
+          "name": "rx_thold_clr",
+          "access": "W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "tx_werr_clr",
+          "access": "W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "tx_rerr_clr",
+          "access": "W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "tx_full_clr",
+          "access": "W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "tx_empty_clr",
+          "access": "W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "tx_thold_clr",
+          "access": "W",
+          "desc": "",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "DMACTRL",
+      "meta": {
+        "offset": "0x00000064",
+        "description": "DMA_CTRL",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:2",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "1",
+          "name": "rx_dma_en",
+          "access": "R/W",
+          "desc": "RX FIFO DMA 接口 enable",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "tx_dma_en",
+          "access": "R/W",
+          "desc": "TX FIFO DMA 接口 enable",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "DMATHRESHOLD",
+      "meta": {
+        "offset": "0x00000068",
+        "description": "DMA_THRESHOLD",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:12",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "11:8",
+          "name": "rx_dma_th",
+          "access": "R/W",
+          "desc": "RX DMA trigger threshold（4-bit 字段，含 `0x0`=keep / `0x1`-`0x8`=1~8 data frame / `0x9`-`0xF`=reserved）",
+          "reserved": false
+        },
+        {
+          "bits": "7:4",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "3:0",
+          "name": "tx_dma_th",
+          "access": "R/W",
+          "desc": "TX DMA trigger threshold（编码同 RX）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "SPINSSDATA",
+      "meta": {
+        "offset": "0x0000006c",
+        "description": "SPI_NSS_DATA",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:1",
+          "name": "",
+          "access": "R",
+          "desc": "—",
+          "reserved": true
+        },
+        {
+          "bits": "0",
+          "name": "nss_data",
+          "access": "R/W",
+          "desc": "当 `NSS_CTRL=1` 时：`0` 透传到 NSS，`1` 透传到 NSS",
+          "reserved": false
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

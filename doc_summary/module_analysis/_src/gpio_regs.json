@@ -1,0 +1,203 @@
+{
+  "registers": [
+    {
+      "section": 4,
+      "name": "GPIOOUTPUTDATA",
+      "meta": {
+        "offset": "0x00000000",
+        "description": "gpio_output_data",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "gpio_data_register",
+          "access": "R/W",
+          "desc": "写入此寄存器的值将在 I/O 信号上输出（仅在对应 GPIO 方向设为 Output 且控制位设为 Software 模式时）。读回值等于最近写入值。Reset: `32'b0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "GPIODIRECTION",
+      "meta": {
+        "offset": "0x00000004",
+        "description": "gpio_direction",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "gpio_data_direction_register",
+          "access": "R/W",
+          "desc": "每 bit 独立控制对应 GPIO 方向：`0` = Input；`1` = Output。Reset: `32'b0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "GPIOCTL",
+      "meta": {
+        "offset": "0x00000008",
+        "description": "gpio_ctl",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "gpio_data_source_register",
+          "access": "R/W",
+          "desc": "每 bit 选择数据源：`0` = Software mode（由 `gpio_output_data` 驱动）；`1` = Hardware mode（由 SoC 内部其它逻辑驱动）。Reset: `32'b0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "GPIOINTEN",
+      "meta": {
+        "offset": "0x00000030",
+        "description": "gpio_inten",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "interrupt_enable",
+          "access": "R/W",
+          "desc": "每 bit 独立配置 GPIO 中断：`0` = 普通信号；`1` = 中断源。**约束**：仅当 (Data direction = Input) ∧ (Mode = Software) 时中断才生效。Reset: `32'b0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "GPIOINTMASK",
+      "meta": {
+        "offset": "0x00000034",
+        "description": "gpio_intmask",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "interrupt_mask",
+          "access": "R/W",
+          "desc": "每 bit 独立控制是否 mask 对应 GPIO 中断：`0` = unmasked（default）；`1` = masked。Reset: `32'b0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "GPIOINTTYPELEVEL",
+      "meta": {
+        "offset": "0x00000038",
+        "description": "gpio_inttype_level",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "interrupt_level",
+          "access": "R/W",
+          "desc": "每 bit 选择中断触发类型：`0` = level-sensitive（default）；`1` = edge-sensitive。Reset: `32'b0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "GPIOINTPOLARITY",
+      "meta": {
+        "offset": "0x0000003c",
+        "description": "gpio_int_polarity",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "interrupt_polarity",
+          "access": "R/W",
+          "desc": "每 bit 选择中断极性：`0` = active-low / falling-edge（default）；`1` = active-high / rising-edge。Reset: `32'b0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "GPIOINTSTATUS",
+      "meta": {
+        "offset": "0x00000040",
+        "description": "gpio_intstatus",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "interrupt_status",
+          "access": "R",
+          "desc": "屏蔽后的中断状态。Reset: `32'b0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "GPIORAWINTSTATUS",
+      "meta": {
+        "offset": "0x00000044",
+        "description": "gpio_rawintstatus",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "raw_interrupt_status",
+          "access": "R",
+          "desc": "屏蔽前的原始中断状态。Reset: `32'b0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "GPIOPORTAINTCLR",
+      "meta": {
+        "offset": "0x0000004c",
+        "description": "gpio_porta_int_clr",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "clear_interrupt",
+          "access": "W",
+          "desc": "写 1 到对应 bit 清除 edge 类型中断。GPIO 未配置为中断时所有中断自动清除：`0` = 不清（default）；`1` = 清中断。Reset: `32'b0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "GPIOINPUTDATA",
+      "meta": {
+        "offset": "0x00000050",
+        "description": "gpio_input_data",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "external_gpio",
+          "access": "R",
+          "desc": "当 GPIO 配为 Input：读此位置返回 PAD 输入值。当 GPIO 配为 Output：读此位置返回 `gpio_output_data` 数据寄存器的值。Reset: `32'b0`",
+          "reserved": false
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

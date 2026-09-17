@@ -1,0 +1,223 @@
+{
+  "registers": [
+    {
+      "section": 4,
+      "name": "RTCCURRENTVALUE",
+      "meta": {
+        "offset": "0x00000000",
+        "description": "RTC_current_value",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "current_counter_value",
+          "access": "R",
+          "desc": "32-bit 内部 counter 当前值，读取保持一致。Reset: `0x0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "RTCMATCHVALUE",
+      "meta": {
+        "offset": "0x00000004",
+        "description": "RTC_match_value",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "counter_match",
+          "access": "R/W",
+          "desc": "匹配值寄存器；当 counter 与之匹配时产生中断（需 `rtc_ien=1` 且 `rtc_mask=0`）。仅当 4 字节全部写入后才生效。Reset: `0x0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "RTCLOADVALUE",
+      "meta": {
+        "offset": "0x00000008",
+        "description": "RTC_load_value",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "counter_load",
+          "access": "R/W",
+          "desc": "加载到 counter 的初值（coherently written）。Reset: `0x0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "RTCCCR",
+      "meta": {
+        "offset": "0x0000000c",
+        "description": "RTC_CCR",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:4",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as 0",
+          "reserved": true
+        },
+        {
+          "bits": "3",
+          "name": "rtc_wen",
+          "access": "R/W",
+          "desc": "Wrap 控制：`0` = 匹配时不立即 wrap（继续到 max）；`1` = 匹配时立即 wrap 回 `RTC_load_value`。Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "rtc_en",
+          "access": "R/W",
+          "desc": "counter 使能：`0` = disabled; `1` = enabled. Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "rtc_mask",
+          "access": "R/W",
+          "desc": "interrupt mask：`0` = unmasked; `1` = masked. Reset: `0x0`",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "rtc_ien",
+          "access": "R/W",
+          "desc": "interrupt enable：`0` = disabled; `1` = enabled. Reset: `0x0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "RTCINTSTATUS",
+      "meta": {
+        "offset": "0x00000010",
+        "description": "RTC_int_status",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:1",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as 0",
+          "reserved": true
+        },
+        {
+          "bits": "0",
+          "name": "rtc_stat",
+          "access": "R",
+          "desc": "Masked 后中断状态：`0` = inactive; `1` = active. Reset: `0x0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "RTCRAWINTSTATUS",
+      "meta": {
+        "offset": "0x00000014",
+        "description": "RTC_raw_int_status",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:1",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as 0",
+          "reserved": true
+        },
+        {
+          "bits": "0",
+          "name": "rtc_rstat",
+          "access": "R",
+          "desc": "原始中断状态（未 mask）：`0` = inactive; `1` = active. Reset: `0x0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "RTCINTCLR",
+      "meta": {
+        "offset": "0x00000018",
+        "description": "RTC_int_clr",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:1",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as 0",
+          "reserved": true
+        },
+        {
+          "bits": "0",
+          "name": "rtc_int_clr",
+          "access": "R",
+          "desc": "读此寄存器清除匹配中断；读完成时（end of read）清除中断。Reset: `0x0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "RTCCOMPVERSION",
+      "meta": {
+        "offset": "0x0000001c",
+        "description": "RTC_COMP_VERSION",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:0",
+          "name": "component_version",
+          "access": "R",
+          "desc": "组件版本号（只读）。Reset: `0x0`",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "RTCDIV",
+      "meta": {
+        "offset": "0x00000020",
+        "description": "RTC_DIV",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:20",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as 0",
+          "reserved": true
+        },
+        {
+          "bits": "19:0",
+          "name": "rtc_div",
+          "access": "R/W",
+          "desc": "RTC 时钟分频值（基于此寄存器的分频）。Reset: `0x4000` (=16384)",
+          "reserved": false
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

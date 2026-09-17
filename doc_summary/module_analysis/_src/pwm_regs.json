@@ -1,0 +1,3339 @@
+{
+  "registers": [
+    {
+      "section": 4,
+      "name": "PWMCFG",
+      "meta": {
+        "offset": "0x00000000",
+        "description": "PWMCFG",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:28",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "27",
+          "name": "cntdiven",
+          "access": "R/W",
+          "desc": "计数器分频使能：`1` = frequency division enable；`0` = frequency division disable（直接用 system clock）",
+          "reserved": false
+        },
+        {
+          "bits": "26:24",
+          "name": "cntdiv",
+          "access": "R/W",
+          "desc": "计数器分频选择：`111`/`110` = /128; `101` = /64; `100` = /32; `011` = /16; `010` = /8; `001` = /4; `000` = /2",
+          "reserved": false
+        },
+        {
+          "bits": "23",
+          "name": "tim5en",
+          "access": "R/W",
+          "desc": "Group 5 输出比较使能：`1` = enable; `0` = disable",
+          "reserved": false
+        },
+        {
+          "bits": "22",
+          "name": "tim4en",
+          "access": "R/W",
+          "desc": "Group 4 输出比较使能",
+          "reserved": false
+        },
+        {
+          "bits": "21",
+          "name": "tim3en",
+          "access": "R/W",
+          "desc": "Group 3 输出比较使能",
+          "reserved": false
+        },
+        {
+          "bits": "20",
+          "name": "tim2en",
+          "access": "R/W",
+          "desc": "Group 2 输出比较使能",
+          "reserved": false
+        },
+        {
+          "bits": "19",
+          "name": "tim1en",
+          "access": "R/W",
+          "desc": "Group 1 输出比较使能",
+          "reserved": false
+        },
+        {
+          "bits": "18",
+          "name": "tim0en",
+          "access": "R/W",
+          "desc": "Group 0 输出比较使能",
+          "reserved": false
+        },
+        {
+          "bits": "17",
+          "name": "cap5en",
+          "access": "R/W",
+          "desc": "Group 5-channel 10 输入捕获使能：`1` = enable; `0` = disable",
+          "reserved": false
+        },
+        {
+          "bits": "16",
+          "name": "cap4en",
+          "access": "R/W",
+          "desc": "Group 4-channel 8 输入捕获使能",
+          "reserved": false
+        },
+        {
+          "bits": "15",
+          "name": "cap3en",
+          "access": "R/W",
+          "desc": "Group 3-channel 6 输入捕获使能",
+          "reserved": false
+        },
+        {
+          "bits": "14",
+          "name": "cap2en",
+          "access": "R/W",
+          "desc": "Group 2-channel 4 输入捕获使能",
+          "reserved": false
+        },
+        {
+          "bits": "13",
+          "name": "cap1en",
+          "access": "R/W",
+          "desc": "Group 1-channel 2 输入捕获使能",
+          "reserved": false
+        },
+        {
+          "bits": "12",
+          "name": "cap0en",
+          "access": "R/W",
+          "desc": "Group 0-channel 0 输入捕获使能",
+          "reserved": false
+        },
+        {
+          "bits": "11",
+          "name": "pwm11en",
+          "access": "R/W",
+          "desc": "Channel 11 PWM 输出使能：`1` = PWM output enable; `0` = PWM output disable",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "pwm10en",
+          "access": "R/W",
+          "desc": "Channel 10 PWM 输出使能",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "pwm9en",
+          "access": "R/W",
+          "desc": "Channel 9 PWM 输出使能",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "pwm8en",
+          "access": "R/W",
+          "desc": "Channel 8 PWM 输出使能",
+          "reserved": false
+        },
+        {
+          "bits": "7",
+          "name": "pwm7en",
+          "access": "R/W",
+          "desc": "Channel 7 PWM 输出使能",
+          "reserved": false
+        },
+        {
+          "bits": "6",
+          "name": "pwm6en",
+          "access": "R/W",
+          "desc": "Channel 6 PWM 输出使能",
+          "reserved": false
+        },
+        {
+          "bits": "5",
+          "name": "pwm5en",
+          "access": "R/W",
+          "desc": "Channel 5 PWM 输出使能",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "pwm4en",
+          "access": "R/W",
+          "desc": "Channel 4 PWM 输出使能",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "pwm3en",
+          "access": "R/W",
+          "desc": "Channel 3 PWM 输出使能",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "pwm2en",
+          "access": "R/W",
+          "desc": "Channel 2 PWM 输出使能",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "pwm1en",
+          "access": "R/W",
+          "desc": "Channel 1 PWM 输出使能",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "pwm0en",
+          "access": "R/W",
+          "desc": "Channel 0 PWM 输出使能",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWMINVERTTRIG",
+      "meta": {
+        "offset": "0x00000004",
+        "description": "PWMINVERTTRIG",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:12",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "11",
+          "name": "pwm11inv",
+          "access": "R/W",
+          "desc": "Invert PWM11 信号：`1` = PWM11 signal is inverted; `0` = not inverted",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "pwm10inv",
+          "access": "R/W",
+          "desc": "Invert PWM10",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "pwm9inv",
+          "access": "R/W",
+          "desc": "Invert PWM9",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "pwm8inv",
+          "access": "R/W",
+          "desc": "Invert PWM8",
+          "reserved": false
+        },
+        {
+          "bits": "7",
+          "name": "pwm7inv",
+          "access": "R/W",
+          "desc": "Invert PWM7",
+          "reserved": false
+        },
+        {
+          "bits": "6",
+          "name": "pwm6inv",
+          "access": "R/W",
+          "desc": "Invert PWM6",
+          "reserved": false
+        },
+        {
+          "bits": "5",
+          "name": "pwm5inv",
+          "access": "R/W",
+          "desc": "Invert PWM5",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "pwm4inv",
+          "access": "R/W",
+          "desc": "Invert PWM4",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "pwm3inv",
+          "access": "R/W",
+          "desc": "Invert PWM3",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "pwm2inv",
+          "access": "R/W",
+          "desc": "Invert PWM2",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "pwm1inv",
+          "access": "R/W",
+          "desc": "Invert PWM1",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "pwm0inv",
+          "access": "R/W",
+          "desc": "Invert PWM0",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWM01TRIG",
+      "meta": {
+        "offset": "0x00000008",
+        "description": "PWM01TRIG",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "pwm1trig",
+          "access": "R/W",
+          "desc": "The value generating group 1 trigger signal",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "pwm0trig",
+          "access": "R/W",
+          "desc": "The value generating group 0 trigger signal",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWM23TRIG",
+      "meta": {
+        "offset": "0x0000000c",
+        "description": "PWM23TRIG",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "pwm3trig",
+          "access": "R/W",
+          "desc": "The value generating group 3 trigger signal",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "pwm2trig",
+          "access": "R/W",
+          "desc": "The value generating group 2 trigger signal",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWM45TRIG",
+      "meta": {
+        "offset": "0x00000010",
+        "description": "PWM45TRIG",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "pwm5trig",
+          "access": "R/W",
+          "desc": "The value generating group 5 trigger signal",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "pwm4trig",
+          "access": "R/W",
+          "desc": "The value generating group 4 trigger signal",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWMINTEN1",
+      "meta": {
+        "offset": "0x00000014",
+        "description": "PWMINTEN1",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:30",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "29",
+          "name": "int2encmpbd",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator B Down (channel5). `1` = a raw interrupt occurs when the counter matches the value in the PWM2CMP register value when counting down; `0` = no interrupt",
+          "reserved": false
+        },
+        {
+          "bits": "28",
+          "name": "int2encmpad",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator A Down (channel4)",
+          "reserved": false
+        },
+        {
+          "bits": "27",
+          "name": "int2encmpbu",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator B Up (channel5)",
+          "reserved": false
+        },
+        {
+          "bits": "26",
+          "name": "int2encmpau",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator A Up (channel4)",
+          "reserved": false
+        },
+        {
+          "bits": "25",
+          "name": "int2encntload",
+          "access": "R/W",
+          "desc": "Interrupt for counter = Load (channel5/4)",
+          "reserved": false
+        },
+        {
+          "bits": "24",
+          "name": "int2encntzero",
+          "access": "R/W",
+          "desc": "Interrupt for counter = 0 (channel5/4)",
+          "reserved": false
+        },
+        {
+          "bits": "23:22",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "21",
+          "name": "int1encmpbd",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator B Down (channel3)",
+          "reserved": false
+        },
+        {
+          "bits": "20",
+          "name": "int1encmpad",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator A Down (channel2)",
+          "reserved": false
+        },
+        {
+          "bits": "19",
+          "name": "int1encmpbu",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator B Up (channel3)",
+          "reserved": false
+        },
+        {
+          "bits": "18",
+          "name": "int1encmpau",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator A Up (channel2)",
+          "reserved": false
+        },
+        {
+          "bits": "17",
+          "name": "int1encntload",
+          "access": "R/W",
+          "desc": "Interrupt for counter = Load (channel3/2)",
+          "reserved": false
+        },
+        {
+          "bits": "16",
+          "name": "int1encntzero",
+          "access": "R/W",
+          "desc": "Interrupt for counter = 0 (channel3/2)",
+          "reserved": false
+        },
+        {
+          "bits": "15:14",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "13",
+          "name": "int0encmpbd",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator B Down (channel1)",
+          "reserved": false
+        },
+        {
+          "bits": "12",
+          "name": "int0encmpad",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator A Down (channel0)",
+          "reserved": false
+        },
+        {
+          "bits": "11",
+          "name": "int0encmpbu",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator B Up (channel1)",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "int0encmpau",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator A Up (channel0)",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "int0encntload",
+          "access": "R/W",
+          "desc": "Interrupt for counter = Load (channel1/0)",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "int0encntzero",
+          "access": "R/W",
+          "desc": "Interrupt for counter = 0 (channel1/0)",
+          "reserved": false
+        },
+        {
+          "bits": "7:0",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWMINTEN2",
+      "meta": {
+        "offset": "0x00000018",
+        "description": "PWMINTEN2",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:22",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "21",
+          "name": "int5encmpbd",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator B Down (group5-channel11)",
+          "reserved": false
+        },
+        {
+          "bits": "20",
+          "name": "int5encmpad",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator A Down (group5-channel10)",
+          "reserved": false
+        },
+        {
+          "bits": "19",
+          "name": "int5encmpbu",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator B Up (group5-channel11)",
+          "reserved": false
+        },
+        {
+          "bits": "18",
+          "name": "int5encmpau",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator A Up (group5-channel10)",
+          "reserved": false
+        },
+        {
+          "bits": "17",
+          "name": "int5encntload",
+          "access": "R/W",
+          "desc": "Interrupt for counter = Load (group5-channel11/10)",
+          "reserved": false
+        },
+        {
+          "bits": "16",
+          "name": "int5encntzero",
+          "access": "R/W",
+          "desc": "Interrupt for counter = 0 (group5-channel11/10)",
+          "reserved": false
+        },
+        {
+          "bits": "15:14",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "13",
+          "name": "int4encmpbd",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator B Down (group4-channel9)",
+          "reserved": false
+        },
+        {
+          "bits": "12",
+          "name": "int4encmpad",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator A Down (group4-channel8)",
+          "reserved": false
+        },
+        {
+          "bits": "11",
+          "name": "int4encmpbu",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator B Up (group4-channel9)",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "int4encmpau",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator A Up (group4-channel8)",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "int4encntload",
+          "access": "R/W",
+          "desc": "Interrupt for counter = Load (group4-channel9/8)",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "int4encntzero",
+          "access": "R/W",
+          "desc": "Interrupt for counter = 0 (group4-channel9/8)",
+          "reserved": false
+        },
+        {
+          "bits": "7:6",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "5",
+          "name": "int3encmpbd",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator B Down (group3-channel7)",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "int3encmpad",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator A Down (group3-channel6)",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "int3encmpbu",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator B Up (group3-channel7)",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "int3encmpau",
+          "access": "R/W",
+          "desc": "Interrupt for counter = comparator A Up (group3-channel6)",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "int3encntload",
+          "access": "R/W",
+          "desc": "Interrupt for counter = Load (group3-channel7/6)",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "int3encntzero",
+          "access": "R/W",
+          "desc": "Interrupt for counter = 0 (group3-channel7/6)",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWMRIS1",
+      "meta": {
+        "offset": "0x0000001c",
+        "description": "PWMRIS1",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:30",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "29",
+          "name": "intris2cmpbd",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator B Down (group2-channel5)",
+          "reserved": false
+        },
+        {
+          "bits": "28",
+          "name": "intris2cmpad",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator A Down (group2-channel4)",
+          "reserved": false
+        },
+        {
+          "bits": "27",
+          "name": "intris2cmpbu",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator B Up (group2-channel5)",
+          "reserved": false
+        },
+        {
+          "bits": "26",
+          "name": "intris2cmpau",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator A Up (group2-channel4)",
+          "reserved": false
+        },
+        {
+          "bits": "25",
+          "name": "intris2cntload",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = Load (group2-channel5/4)",
+          "reserved": false
+        },
+        {
+          "bits": "24",
+          "name": "intris2cntzero",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = 0 (group2-channel5/4)",
+          "reserved": false
+        },
+        {
+          "bits": "23:22",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "21",
+          "name": "intris1cmpbd",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator B Down (group1-channel3)",
+          "reserved": false
+        },
+        {
+          "bits": "20",
+          "name": "intris1cmpad",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator A Down (group1-channel2)",
+          "reserved": false
+        },
+        {
+          "bits": "19",
+          "name": "intris1cmpbu",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator B Up (group1-channel3)",
+          "reserved": false
+        },
+        {
+          "bits": "18",
+          "name": "intris1cmpau",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator A Up (group1-channel2)",
+          "reserved": false
+        },
+        {
+          "bits": "17",
+          "name": "intris1cntload",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = Load (group1-channel3/2)",
+          "reserved": false
+        },
+        {
+          "bits": "16",
+          "name": "intris1cntzero",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = 0 (group1-channel3/2)",
+          "reserved": false
+        },
+        {
+          "bits": "15:14",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "13",
+          "name": "intris0cmpbd",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator B Down (group0-channel1)",
+          "reserved": false
+        },
+        {
+          "bits": "12",
+          "name": "intris0cmpad",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator A Down (group0-channel0)",
+          "reserved": false
+        },
+        {
+          "bits": "11",
+          "name": "intris0cmpbu",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator B Up (group0-channel1)",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "intris0cmpau",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator A Up (group0-channel0)",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "intris0cntload",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = Load (group0-channel1/0)",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "intris0cntzero",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = 0 (group0-channel1/0)",
+          "reserved": false
+        },
+        {
+          "bits": "7:0",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWMRIS2",
+      "meta": {
+        "offset": "0x00000020",
+        "description": "PWMRIS2",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:22",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "21",
+          "name": "intris5cmpbd",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator B Down (group5-channel11)",
+          "reserved": false
+        },
+        {
+          "bits": "20",
+          "name": "intris5cmpad",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator A Down (group5-channel10)",
+          "reserved": false
+        },
+        {
+          "bits": "19",
+          "name": "intris5cmpbu",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator B Up (group5-channel11)",
+          "reserved": false
+        },
+        {
+          "bits": "18",
+          "name": "intris5cmpau",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator A Up (group5-channel10)",
+          "reserved": false
+        },
+        {
+          "bits": "17",
+          "name": "intris5cntload",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = Load (group5-channel11/10)",
+          "reserved": false
+        },
+        {
+          "bits": "16",
+          "name": "intris5cntzero",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = 0 (group5-channel11/10)",
+          "reserved": false
+        },
+        {
+          "bits": "15:14",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "13",
+          "name": "intris4cmpbd",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator B Down (group4-channel9)",
+          "reserved": false
+        },
+        {
+          "bits": "12",
+          "name": "intris4cmpad",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator A Down (group4-channel8)",
+          "reserved": false
+        },
+        {
+          "bits": "11",
+          "name": "intris4cmpbu",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator B Up (group4-channel9)",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "intris4cmpau",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator A Up (group4-channel8)",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "intris4cntload",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = Load (group4-channel9/8)",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "intris4cntzero",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = 0 (group4-channel9/8)",
+          "reserved": false
+        },
+        {
+          "bits": "7:6",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "5",
+          "name": "intris3cmpbd",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator B Down (group3-channel7)",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "intris3cmpad",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator A Down (group3-channel6)",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "intris3cmpbu",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator B Up (group3-channel7)",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "intris3cmpau",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = comparator A Up (group3-channel6)",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "intris3cntload",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = Load (group3-channel7/6)",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "intris3cntzero",
+          "access": "R",
+          "desc": "Raw Interrupt for counter = 0 (group3-channel7/6)",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWMIC1",
+      "meta": {
+        "offset": "0x00000024",
+        "description": "PWMIC1",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:30",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "29",
+          "name": "intic2cmpbd",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator B Down (group2-channel5). `1` = clear; `0` = not clear",
+          "reserved": false
+        },
+        {
+          "bits": "28",
+          "name": "intic2cmpad",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator A Down (group2-channel4)",
+          "reserved": false
+        },
+        {
+          "bits": "27",
+          "name": "intic2cmpbu",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator B Up (group2-channel5)",
+          "reserved": false
+        },
+        {
+          "bits": "26",
+          "name": "intic2cmpau",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator A Up (group2-channel4)",
+          "reserved": false
+        },
+        {
+          "bits": "25",
+          "name": "intic2cntload",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = Load (group2-channel5/4)",
+          "reserved": false
+        },
+        {
+          "bits": "24",
+          "name": "intic2cntzero",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = 0 (group2-channel5/4)",
+          "reserved": false
+        },
+        {
+          "bits": "23:22",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "21",
+          "name": "intic1cmpbd",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator B Down (group1-channel3)",
+          "reserved": false
+        },
+        {
+          "bits": "20",
+          "name": "intic1cmpad",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator A Down (group1-channel2)",
+          "reserved": false
+        },
+        {
+          "bits": "19",
+          "name": "intic1cmpbu",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator B Up (group1-channel3)",
+          "reserved": false
+        },
+        {
+          "bits": "18",
+          "name": "intic1cmpau",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator A Up (group1-channel2)",
+          "reserved": false
+        },
+        {
+          "bits": "17",
+          "name": "intic1cntload",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = Load (group1-channel3/2)",
+          "reserved": false
+        },
+        {
+          "bits": "16",
+          "name": "intic1cntzero",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = 0 (group1-channel3/2)",
+          "reserved": false
+        },
+        {
+          "bits": "15:14",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "13",
+          "name": "intic0cmpbd",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator B Down (group0-channel1/0)",
+          "reserved": false
+        },
+        {
+          "bits": "12",
+          "name": "intic0cmpad",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator A Down (group0-channel0)",
+          "reserved": false
+        },
+        {
+          "bits": "11",
+          "name": "intic0cmpbu",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator B Up (group0-channel1)",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "intic0cmpau",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator A Up (group0-channel0)",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "intic0cntload",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = Load (group0-channel1/0)",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "intic0cntzero",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = 0 (group0-channel1/0)",
+          "reserved": false
+        },
+        {
+          "bits": "7:0",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWMIC2",
+      "meta": {
+        "offset": "0x00000028",
+        "description": "PWMIC2",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:22",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "21",
+          "name": "intic5cmpbd",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator B Down (group5-channel11)",
+          "reserved": false
+        },
+        {
+          "bits": "20",
+          "name": "intic5cmpad",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator A Down (group5-channel10)",
+          "reserved": false
+        },
+        {
+          "bits": "19",
+          "name": "intic5cmpbu",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator B Up (group5-channel11)",
+          "reserved": false
+        },
+        {
+          "bits": "18",
+          "name": "intic5cmpau",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator A Up (group5-channel10)",
+          "reserved": false
+        },
+        {
+          "bits": "17",
+          "name": "intic5cntload",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = Load (group5-channel11/10)",
+          "reserved": false
+        },
+        {
+          "bits": "16",
+          "name": "intic5cntzero",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = 0 (group5-channel11/10)",
+          "reserved": false
+        },
+        {
+          "bits": "15:14",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "13",
+          "name": "intic4cmpbd",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator B Down (group4-channel9)",
+          "reserved": false
+        },
+        {
+          "bits": "12",
+          "name": "intic4cmpad",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator A Down (group4-channel8)",
+          "reserved": false
+        },
+        {
+          "bits": "11",
+          "name": "intic4cmpbu",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator B Up (group4-channel9)",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "intic4cmpau",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator A Up (group4-channel8)",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "intic4cntload",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = Load (group4-channel9/8)",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "intic4cntzero",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = 0 (group4-channel9/8)",
+          "reserved": false
+        },
+        {
+          "bits": "7:6",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "5",
+          "name": "intic3cmpbd",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator B Down (group3-channel7)",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "intic3cmpad",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator A Down (group3-channel6)",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "intic3cmpbu",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator B Up (group3-channel7)",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "intic3cmpau",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = comparator A Up (group3-channel6)",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "intic3cntload",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = Load (group3-channel7/6)",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "intic3cntzero",
+          "access": "R/W",
+          "desc": "Clear Interrupt for counter = 0 (group3-channel7/6)",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWMIS1",
+      "meta": {
+        "offset": "0x0000002c",
+        "description": "PWMIS1",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:30",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "29",
+          "name": "intis2cmpbd",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator B Down (group2-channel5)",
+          "reserved": false
+        },
+        {
+          "bits": "28",
+          "name": "intis2cmpad",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator A Down (group2-channel4)",
+          "reserved": false
+        },
+        {
+          "bits": "27",
+          "name": "intis2cmpbu",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator B Up (group2-channel5)",
+          "reserved": false
+        },
+        {
+          "bits": "26",
+          "name": "intis2cmpau",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator A Up (group2-channel4)",
+          "reserved": false
+        },
+        {
+          "bits": "25",
+          "name": "intis2cntload",
+          "access": "R",
+          "desc": "Interrupt for counter = Load (group2-channel5/4)",
+          "reserved": false
+        },
+        {
+          "bits": "24",
+          "name": "intis2cntzero",
+          "access": "R",
+          "desc": "Interrupt for counter = 0 (group2-channel5/4)",
+          "reserved": false
+        },
+        {
+          "bits": "23:22",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "21",
+          "name": "intis1cmpbd",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator B Down (group1-channel3)",
+          "reserved": false
+        },
+        {
+          "bits": "20",
+          "name": "intis1cmpad",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator A Down (group1-channel2)",
+          "reserved": false
+        },
+        {
+          "bits": "19",
+          "name": "intis1cmpbu",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator B Up (group1-channel3)",
+          "reserved": false
+        },
+        {
+          "bits": "18",
+          "name": "intis1cmpau",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator A Up (group1-channel2)",
+          "reserved": false
+        },
+        {
+          "bits": "17",
+          "name": "intis1cntload",
+          "access": "R",
+          "desc": "Interrupt for counter = Load (group1-channel3/2)",
+          "reserved": false
+        },
+        {
+          "bits": "16",
+          "name": "intis1cntzero",
+          "access": "R",
+          "desc": "Interrupt for counter = 0 (group1-channel3/2)",
+          "reserved": false
+        },
+        {
+          "bits": "15:14",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "13",
+          "name": "intis0cmpbd",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator B Down (group0-channel1)",
+          "reserved": false
+        },
+        {
+          "bits": "12",
+          "name": "intis0cmpad",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator A Down (group0-channel0)",
+          "reserved": false
+        },
+        {
+          "bits": "11",
+          "name": "intis0cmpbu",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator B Up (group0-channel1)",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "intis0cmpau",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator A Up (group0-channel0)",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "intis0cntload",
+          "access": "R",
+          "desc": "Interrupt for counter = Load (group0-channel1/0)",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "intis0cntzero",
+          "access": "R",
+          "desc": "Interrupt for counter = 0 (group0-channel1/0)",
+          "reserved": false
+        },
+        {
+          "bits": "7:0",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWMIS2",
+      "meta": {
+        "offset": "0x00000030",
+        "description": "PWMIS2",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:22",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "21",
+          "name": "intis5cmpbd",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator B Down (group5-channel11)",
+          "reserved": false
+        },
+        {
+          "bits": "20",
+          "name": "intis5cmpad",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator A Down (group5-channel10)",
+          "reserved": false
+        },
+        {
+          "bits": "19",
+          "name": "intis5cmpbu",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator B Up (group5-channel11)",
+          "reserved": false
+        },
+        {
+          "bits": "18",
+          "name": "intis5cmpau",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator A Up (group5-channel10)",
+          "reserved": false
+        },
+        {
+          "bits": "17",
+          "name": "intis5cntload",
+          "access": "R",
+          "desc": "Interrupt for counter = Load (group5-channel11/10)",
+          "reserved": false
+        },
+        {
+          "bits": "16",
+          "name": "intis5cntzero",
+          "access": "R",
+          "desc": "Interrupt for counter = 0 (group5-channel11/10)",
+          "reserved": false
+        },
+        {
+          "bits": "15:14",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "13",
+          "name": "intis4cmpbd",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator B Down (group4-channel9)",
+          "reserved": false
+        },
+        {
+          "bits": "12",
+          "name": "intis4cmpad",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator A Down (group4-channel8)",
+          "reserved": false
+        },
+        {
+          "bits": "11",
+          "name": "intis4cmpbu",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator B Up (group4-channel9)",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "intis4cmpau",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator A Up (group4-channel8)",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "intis4cntload",
+          "access": "R",
+          "desc": "Interrupt for counter = Load (group4-channel9/8)",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "intis4cntzero",
+          "access": "R",
+          "desc": "Interrupt for counter = 0 (group4-channel9/8)",
+          "reserved": false
+        },
+        {
+          "bits": "7:6",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "5",
+          "name": "intis3cmpbd",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator B Down (group3-channel7)",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "intis3cmpad",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator A Down (group3-channel6)",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "intis3cmpbu",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator B Up (group3-channel7)",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "intis3cmpau",
+          "access": "R",
+          "desc": "Interrupt for counter = comparator A Up (group3-channel6)",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "intis3cntload",
+          "access": "R",
+          "desc": "Interrupt for counter = Load (group3-channel7/6)",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "intis3cntzero",
+          "access": "R",
+          "desc": "Interrupt for counter = 0 (group3-channel7/6)",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWMCTL",
+      "meta": {
+        "offset": "0x00000034",
+        "description": "PWMCTL",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:18",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "17:16",
+          "name": "sync5mode",
+          "access": "R/W",
+          "desc": "Synchronize mode (group5-channel11/10): `00` = update register value when counter reach to zero; `01` = update when counter reach to load value; `10` = update when counter reach to zero and load value; `11` = not update",
+          "reserved": false
+        },
+        {
+          "bits": "15:14",
+          "name": "sync4mode",
+          "access": "R/W",
+          "desc": "Synchronize mode (group4-channel9/8) — 编码同上",
+          "reserved": false
+        },
+        {
+          "bits": "13:12",
+          "name": "sync3mode",
+          "access": "R/W",
+          "desc": "Synchronize mode (group3-channel7/6) — 编码同上",
+          "reserved": false
+        },
+        {
+          "bits": "11:10",
+          "name": "sync2mode",
+          "access": "R/W",
+          "desc": "Synchronize mode (group2-channel5/4) — 编码同上",
+          "reserved": false
+        },
+        {
+          "bits": "9:8",
+          "name": "sync1mode",
+          "access": "R/W",
+          "desc": "Synchronize mode (group1-channel3/2) — 编码同上",
+          "reserved": false
+        },
+        {
+          "bits": "7:6",
+          "name": "sync0mode",
+          "access": "R/W",
+          "desc": "Synchronize mode (group0-channel1/0) — 编码同上",
+          "reserved": false
+        },
+        {
+          "bits": "5",
+          "name": "pwm5mode",
+          "access": "R/W",
+          "desc": "Counter mode (group5-channel11/10): `1` = count-up/down mode; `0` = count-up mode",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "pwm4mode",
+          "access": "R/W",
+          "desc": "Counter mode (group4-channel9/8) — 编码同上",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "pwm3mode",
+          "access": "R/W",
+          "desc": "Counter mode (group3-channel7/6) — 编码同上",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "pwm2mode",
+          "access": "R/W",
+          "desc": "Counter mode (group2-channel5/4) — 编码同上",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "pwm1mode",
+          "access": "R/W",
+          "desc": "Counter mode (group1-channel3/2) — 编码同上",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "pwm0mode",
+          "access": "R/W",
+          "desc": "Counter mode (group0-channel1/0) — 编码同上",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWM01LOAD",
+      "meta": {
+        "offset": "0x00000038",
+        "description": "每 register 内含 2 个 16-bit load value（对应同一对 group 的两个计数器），字段名 `loadm` / `loadn`。整体 reset = `0x0000_0000`。本寄存器组的 `PWM45LOAD` 见下方独立子节。",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "loadm",
+          "access": "R/W",
+          "desc": "Counter load m value（m=5：group5-channel11/10）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "loadn",
+          "access": "R/W",
+          "desc": "Counter load n value（n=4：group4-channel9/8）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWM45LOAD",
+      "meta": {
+        "offset": "0x00000040",
+        "description": "PWM45LOAD",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "loadm",
+          "access": "R/W",
+          "desc": "Counter load m value（m=5：group5-channel11/10）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "loadn",
+          "access": "R/W",
+          "desc": "Counter load n value（n=4：group4-channel9/8）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWM01COUNT",
+      "meta": {
+        "offset": "0x00000044",
+        "description": "只读当前计数器值，字段名 `countm` / `countn`。整体 reset = `0x0000_0000`。本寄存器组的 `PWM45COUNT` 见下方独立子节。",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "countm",
+          "access": "R",
+          "desc": "Counter m current value（m=5：group5-channel11/10）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "countn",
+          "access": "R",
+          "desc": "Counter n current value（n=4：group4-channel9/8）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWM45COUNT",
+      "meta": {
+        "offset": "0x0000004c",
+        "description": "PWM45COUNT",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "countm",
+          "access": "R",
+          "desc": "Counter m current value（m=5：group5-channel11/10）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "countn",
+          "access": "R",
+          "desc": "Counter n current value（n=4：group4-channel9/8）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWM0CMP",
+      "meta": {
+        "offset": "0x00000050",
+        "description": "每寄存器 32-bit 内含 2 个 16-bit compare value（高 16-bit = 该 group 第 2 通道 CMP_B，低 16-bit = 第 1 通道 CMP_A），字段名 `compnb` / `compna`。整体 reset = `0x0000_0000`。本寄存器组的 `PWM5CMP` 见下方独立子节。",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "compnb",
+          "access": "R/W",
+          "desc": "Comparator B value（n=5：group5-channel11）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "compna",
+          "access": "R/W",
+          "desc": "Comparator A value（n=5：group5-channel10）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWM5CMP",
+      "meta": {
+        "offset": "0x00000064",
+        "description": "PWM5CMP",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "compnb",
+          "access": "R/W",
+          "desc": "Comparator B value（n=5：group5-channel11）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "compna",
+          "access": "R/W",
+          "desc": "Comparator A value（n=5：group5-channel10）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWM01DB",
+      "meta": {
+        "offset": "0x00000068",
+        "description": "死区（dead-band）延迟计数值，用于互补 PWM 输出延迟插入；位域结构见下方 `PWM45DB` 独立子节。整体 reset = `0x0000_0000`。",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:26",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "25",
+          "name": "dbmen",
+          "access": "R/W",
+          "desc": "Dead-band m generator enable（m=5：group5-channel11/10）：`1` = insert dead-band；`0` = pass through",
+          "reserved": false
+        },
+        {
+          "bits": "24",
+          "name": "dbnen",
+          "access": "R/W",
+          "desc": "Dead-band n generator enable（n=4：group4-channel9/8）：`1` = insert dead-band；`0` = pass through",
+          "reserved": false
+        },
+        {
+          "bits": "23:12",
+          "name": "delaym",
+          "access": "R/W",
+          "desc": "Dead-band delay（m=5：group5-channel11/10）：clock tick 数",
+          "reserved": false
+        },
+        {
+          "bits": "11:0",
+          "name": "delayn",
+          "access": "R/W",
+          "desc": "Dead-band delay（n=4：group4-channel9/8）：clock tick 数",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWM45DB",
+      "meta": {
+        "offset": "0x00000070",
+        "description": "PWM45DB",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:26",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "25",
+          "name": "dbmen",
+          "access": "R/W",
+          "desc": "Dead-band m generator enable（m=5：group5-channel11/10）：`1` = insert dead-band；`0` = pass through",
+          "reserved": false
+        },
+        {
+          "bits": "24",
+          "name": "dbnen",
+          "access": "R/W",
+          "desc": "Dead-band n generator enable（n=4：group4-channel9/8）：`1` = insert dead-band；`0` = pass through",
+          "reserved": false
+        },
+        {
+          "bits": "23:12",
+          "name": "delaym",
+          "access": "R/W",
+          "desc": "Dead-band delay（m=5：group5-channel11/10）：clock tick 数",
+          "reserved": false
+        },
+        {
+          "bits": "11:0",
+          "name": "delayn",
+          "access": "R/W",
+          "desc": "Dead-band delay（n=4：group4-channel9/8）：clock tick 数",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CAPCTL",
+      "meta": {
+        "offset": "0x00000074",
+        "description": "字段命名与功能（user guide Table 6-19）：",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:18",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "17:16",
+          "name": "cap5event",
+          "access": "R/W",
+          "desc": "Capture5 边沿事件模式（group5-channel10）：`00` = posedge；`01` = negedge；`10` = reserved；`11` = both edge",
+          "reserved": false
+        },
+        {
+          "bits": "15:14",
+          "name": "cap4event",
+          "access": "R/W",
+          "desc": "Capture4 边沿事件模式（group4-channel8）— 编码同上",
+          "reserved": false
+        },
+        {
+          "bits": "13:12",
+          "name": "cap3event",
+          "access": "R/W",
+          "desc": "Capture3 边沿事件模式（group3-channel6）— 编码同上",
+          "reserved": false
+        },
+        {
+          "bits": "11:10",
+          "name": "cap2event",
+          "access": "R/W",
+          "desc": "Capture2 边沿事件模式（group2-channel4）— 编码同上",
+          "reserved": false
+        },
+        {
+          "bits": "9:8",
+          "name": "cap1event",
+          "access": "R/W",
+          "desc": "Capture1 边沿事件模式（group1-channel2）— 编码同上",
+          "reserved": false
+        },
+        {
+          "bits": "7:6",
+          "name": "cap0event",
+          "access": "R/W",
+          "desc": "Capture0 边沿事件模式（group0-channel0）— 编码同上",
+          "reserved": false
+        },
+        {
+          "bits": "5",
+          "name": "cap5mode",
+          "access": "R/W",
+          "desc": "Capture5 模式（group5-channel10）：`1` = edge count mode；`0` = edge time mode",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "cap4mode",
+          "access": "R/W",
+          "desc": "Capture4 模式（group4-channel8）— 编码同上",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "cap3mode",
+          "access": "R/W",
+          "desc": "Capture3 模式（group3-channel6）— 编码同上",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "cap2mode",
+          "access": "R/W",
+          "desc": "Capture2 模式（group2-channel4）— 编码同上",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "cap1mode",
+          "access": "R/W",
+          "desc": "Capture1 模式（group1-channel2）— 编码同上",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "cap0mode",
+          "access": "R/W",
+          "desc": "Capture0 模式（group0-channel0）— 编码同上",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CAPINTEN",
+      "meta": {
+        "offset": "0x00000078",
+        "description": "CAPINTEN",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:12",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "11",
+          "name": "cap5timie",
+          "access": "R/W",
+          "desc": "Capture5 edge time interrupt enable（group5-channel10）",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "cap4timie",
+          "access": "R/W",
+          "desc": "Capture4 edge time interrupt enable（group4-channel8）",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "cap3timie",
+          "access": "R/W",
+          "desc": "Capture3 edge time interrupt enable（group3-channel6）",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "cap2timie",
+          "access": "R/W",
+          "desc": "Capture2 edge time interrupt enable（group2-channel4）",
+          "reserved": false
+        },
+        {
+          "bits": "7",
+          "name": "cap1timie",
+          "access": "R/W",
+          "desc": "Capture1 edge time interrupt enable（group1-channel2）",
+          "reserved": false
+        },
+        {
+          "bits": "6",
+          "name": "cap0timie",
+          "access": "R/W",
+          "desc": "Capture0 edge time interrupt enable（group0-channel0）",
+          "reserved": false
+        },
+        {
+          "bits": "5",
+          "name": "cap5cntie",
+          "access": "R/W",
+          "desc": "Capture5 edge count interrupt enable（group5-channel10）",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "cap4cntie",
+          "access": "R/W",
+          "desc": "Capture4 edge count interrupt enable（group4-channel8）",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "cap3cntie",
+          "access": "R/W",
+          "desc": "Capture3 edge count interrupt enable（group3-channel6）",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "cap2cntie",
+          "access": "R/W",
+          "desc": "Capture2 edge count interrupt enable（group2-channel4）",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "cap1cntie",
+          "access": "R/W",
+          "desc": "Capture1 edge count interrupt enable（group1-channel2）",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "cap0cntie",
+          "access": "R/W",
+          "desc": "Capture0 edge count interrupt enable（group0-channel0）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CAPRIS",
+      "meta": {
+        "offset": "0x0000007c",
+        "description": "CAPRIS",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:12",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "11",
+          "name": "cap5timris",
+          "access": "R",
+          "desc": "Capture5 edge time raw interrupt occurs（group5-channel10）",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "cap4timris",
+          "access": "R",
+          "desc": "Capture4 edge time raw interrupt occurs（group4-channel8）",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "cap3timris",
+          "access": "R",
+          "desc": "Capture3 edge time raw interrupt occurs（group3-channel6）",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "cap2timris",
+          "access": "R",
+          "desc": "Capture2 edge time raw interrupt occurs（group2-channel4）",
+          "reserved": false
+        },
+        {
+          "bits": "7",
+          "name": "cap1timris",
+          "access": "R",
+          "desc": "Capture1 edge time raw interrupt occurs（group1-channel2）",
+          "reserved": false
+        },
+        {
+          "bits": "6",
+          "name": "cap0timris",
+          "access": "R",
+          "desc": "Capture0 edge time raw interrupt occurs（group0-channel0）",
+          "reserved": false
+        },
+        {
+          "bits": "5",
+          "name": "cap5cntris",
+          "access": "R",
+          "desc": "Capture5 edge count raw interrupt occurs（group5-channel10）",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "cap4cntris",
+          "access": "R",
+          "desc": "Capture4 edge count raw interrupt occurs（group4-channel8）",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "cap3cntris",
+          "access": "R",
+          "desc": "Capture3 edge count raw interrupt occurs（group3-channel6）",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "cap2cntris",
+          "access": "R",
+          "desc": "Capture2 edge count raw interrupt occurs（group2-channel4）",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "cap1cntris",
+          "access": "R",
+          "desc": "Capture1 edge count raw interrupt occurs（group1-channel2）",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "cap0cntris",
+          "access": "R",
+          "desc": "Capture0 edge count raw interrupt occurs（group0-channel0）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CAPIC",
+      "meta": {
+        "offset": "0x00000080",
+        "description": "CAPIC",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:12",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "11",
+          "name": "cap5timic",
+          "access": "R/W",
+          "desc": "Clear Capture5 edge time interrupt（group5-channel10）",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "cap4timic",
+          "access": "R/W",
+          "desc": "Clear Capture4 edge time interrupt（group4-channel8）",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "cap3timic",
+          "access": "R/W",
+          "desc": "Clear Capture3 edge time interrupt（group3-channel6）",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "cap2timic",
+          "access": "R/W",
+          "desc": "Clear Capture2 edge time interrupt（group2-channel4）",
+          "reserved": false
+        },
+        {
+          "bits": "7",
+          "name": "cap1timic",
+          "access": "R/W",
+          "desc": "Clear Capture1 edge time interrupt（group1-channel2）",
+          "reserved": false
+        },
+        {
+          "bits": "6",
+          "name": "cap0timic",
+          "access": "R/W",
+          "desc": "Clear Capture0 edge time interrupt（group0-channel0）",
+          "reserved": false
+        },
+        {
+          "bits": "5",
+          "name": "cap5cntic",
+          "access": "R/W",
+          "desc": "Clear Capture5 edge count interrupt（group5-channel10）",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "cap4cntic",
+          "access": "R/W",
+          "desc": "Clear Capture4 edge count interrupt（group4-channel8）",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "cap3cntic",
+          "access": "R/W",
+          "desc": "Clear Capture3 edge count interrupt（group3-channel6）",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "cap2cntic",
+          "access": "R/W",
+          "desc": "Clear Capture2 edge count interrupt（group2-channel4）",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "cap1cntic",
+          "access": "R/W",
+          "desc": "Clear Capture1 edge count interrupt（group1-channel2）",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "cap0cntic",
+          "access": "R/W",
+          "desc": "Clear Capture0 edge count interrupt（group0-channel0）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CAPIS",
+      "meta": {
+        "offset": "0x00000084",
+        "description": "CAPIS",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:12",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "11",
+          "name": "cap5timis",
+          "access": "R",
+          "desc": "Capture5 edge time interrupt occurs（group5-channel10）",
+          "reserved": false
+        },
+        {
+          "bits": "10",
+          "name": "cap4timis",
+          "access": "R",
+          "desc": "Capture4 edge time interrupt occurs（group4-channel8）",
+          "reserved": false
+        },
+        {
+          "bits": "9",
+          "name": "cap3timis",
+          "access": "R",
+          "desc": "Capture3 edge time interrupt occurs（group3-channel6）",
+          "reserved": false
+        },
+        {
+          "bits": "8",
+          "name": "cap2timis",
+          "access": "R",
+          "desc": "Capture2 edge time interrupt occurs（group2-channel4）",
+          "reserved": false
+        },
+        {
+          "bits": "7",
+          "name": "cap1timis",
+          "access": "R",
+          "desc": "Capture1 edge time interrupt occurs（group1-channel2）",
+          "reserved": false
+        },
+        {
+          "bits": "6",
+          "name": "cap0timis",
+          "access": "R",
+          "desc": "Capture0 edge time interrupt occurs（group0-channel0）",
+          "reserved": false
+        },
+        {
+          "bits": "5",
+          "name": "cap5cntis",
+          "access": "R",
+          "desc": "Capture5 edge count interrupt occurs（group5-channel10）",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "cap4cntis",
+          "access": "R",
+          "desc": "Capture4 edge count interrupt occurs（group4-channel8）",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "cap3cntis",
+          "access": "R",
+          "desc": "Capture3 edge count interrupt occurs（group3-channel6）",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "cap2cntis",
+          "access": "R",
+          "desc": "Capture2 edge count interrupt occurs（group2-channel4）",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "cap1cntis",
+          "access": "R",
+          "desc": "Capture1 edge count interrupt occurs（group1-channel2）",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "cap0cntis",
+          "access": "R",
+          "desc": "Capture0 edge count interrupt occurs（group0-channel0）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CAP01T",
+      "meta": {
+        "offset": "0x00000088",
+        "description": "捕获事件时的 counter 值，字段名 `CAPnmTm` / `CAPnmTn`。整体 reset = `0x0000_0000`。本寄存器组的 `CAP45T` 见下方独立子节。",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "capnmtm",
+          "access": "R",
+          "desc": "Input capture m counter value（m=5：group5-channel10）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "capnmtn",
+          "access": "R",
+          "desc": "Input capture n counter value（n=4：group5-channel8）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CAP45T",
+      "meta": {
+        "offset": "0x00000090",
+        "description": "CAP45T",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "capnmtm",
+          "access": "R",
+          "desc": "Input capture m counter value（m=5：group5-channel10）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "capnmtn",
+          "access": "R",
+          "desc": "Input capture n counter value（n=4：group5-channel8）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CAP01MATCH",
+      "meta": {
+        "offset": "0x00000094",
+        "description": "捕获 match 值，字段名 `CAPnmMATCHm` / `CAPnmMATCHn`。整体 reset = `0x0000_0000`。本寄存器组的 `CAP45MATCH` 见下方独立子节。",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "capnmmatchm",
+          "access": "R/W",
+          "desc": "Input capture m match value（m=5：group5-channel10）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "capnmmatchn",
+          "access": "R/W",
+          "desc": "Input capture n match value（n=4：group5-channel8）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CAP45MATCH",
+      "meta": {
+        "offset": "0x0000009c",
+        "description": "CAP45MATCH",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "capnmmatchm",
+          "access": "R/W",
+          "desc": "Input capture m match value（m=5：group5-channel10）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "capnmmatchn",
+          "access": "R/W",
+          "desc": "Input capture n match value（n=4：group5-channel8）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIMINTEN",
+      "meta": {
+        "offset": "0x000000a0",
+        "description": "TIM_INT_EN",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:6",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved",
+          "reserved": true
+        },
+        {
+          "bits": "5",
+          "name": "tim5ie",
+          "access": "R/W",
+          "desc": "Timer5 中断使能（counter = CMP match）",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "tim4ie",
+          "access": "R/W",
+          "desc": "Timer4 中断使能",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "tim3ie",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "tim2ie",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "tim1ie",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "tim0ie",
+          "access": "R/W",
+          "desc": "",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIMRIS",
+      "meta": {
+        "offset": "0x000000a4",
+        "description": "TIMRIS",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:6",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "5",
+          "name": "tim5ris",
+          "access": "R",
+          "desc": "Timer5 raw interrupt occurs（group5）",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "tim4ris",
+          "access": "R",
+          "desc": "Timer4 raw interrupt occurs（group4）",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "tim3ris",
+          "access": "R",
+          "desc": "Timer3 raw interrupt occurs（group3）",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "tim2ris",
+          "access": "R",
+          "desc": "Timer2 raw interrupt occurs（group2）",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "tim1ris",
+          "access": "R",
+          "desc": "Timer1 raw interrupt occurs（group1）",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "tim0ris",
+          "access": "R",
+          "desc": "Timer0 raw interrupt occurs（group0）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIMINTCLR",
+      "meta": {
+        "offset": "0x000000a8",
+        "description": "TIM_INT_CLR",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:6",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "5",
+          "name": "tim5ic",
+          "access": "R/W",
+          "desc": "Timer5 interrupt clear（group5）",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "tim4ic",
+          "access": "R/W",
+          "desc": "Timer4 interrupt clear（group4）",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "tim3ic",
+          "access": "R/W",
+          "desc": "Timer3 interrupt clear（group3）",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "tim2ic",
+          "access": "R/W",
+          "desc": "Timer2 interrupt clear（group2）",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "tim1ic",
+          "access": "R/W",
+          "desc": "Timer1 interrupt clear（group1）",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "tim0ic",
+          "access": "R/W",
+          "desc": "Timer0 interrupt clear（group0）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIMIS",
+      "meta": {
+        "offset": "0x000000ac",
+        "description": "TIMIS",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:6",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "5",
+          "name": "tim5is",
+          "access": "R",
+          "desc": "Timer5 interrupt occurs（group5）",
+          "reserved": false
+        },
+        {
+          "bits": "4",
+          "name": "tim4is",
+          "access": "R",
+          "desc": "Timer4 interrupt occurs（group4）",
+          "reserved": false
+        },
+        {
+          "bits": "3",
+          "name": "tim3is",
+          "access": "R",
+          "desc": "Timer3 interrupt occurs（group3）",
+          "reserved": false
+        },
+        {
+          "bits": "2",
+          "name": "tim2is",
+          "access": "R",
+          "desc": "Timer2 interrupt occurs（group2）",
+          "reserved": false
+        },
+        {
+          "bits": "1",
+          "name": "tim1is",
+          "access": "R",
+          "desc": "Timer1 interrupt occurs（group1）",
+          "reserved": false
+        },
+        {
+          "bits": "0",
+          "name": "tim0is",
+          "access": "R",
+          "desc": "Timer0 interrupt occurs（group0）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIM01LOAD",
+      "meta": {
+        "offset": "0x000000b0",
+        "description": "每寄存器含 2 个 16-bit timer load 值，字段名 `timloadm` / `timloadn`。整体 reset = `0x0000_0000`。本寄存器组的 `TIM45LOAD` 见下方独立子节。",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "timloadm",
+          "access": "R/W",
+          "desc": "Timer m load value（m=5：group5）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "timloadn",
+          "access": "R/W",
+          "desc": "Timer n load value（n=4：group5）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIM45LOAD",
+      "meta": {
+        "offset": "0x000000b8",
+        "description": "TIM45LOAD",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "timloadm",
+          "access": "R/W",
+          "desc": "Timer m load value（m=5：group5）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "timloadn",
+          "access": "R/W",
+          "desc": "Timer n load value（n=4：group5）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIM01COUNT",
+      "meta": {
+        "offset": "0x000000bc",
+        "description": "每寄存器含 2 个 16-bit timer 当前值，字段名 `timcntm` / `timcntn`。整体 reset = `0x0000_0000`。本寄存器组的 `TIM45COUNT` 见下方独立子节。",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "timcntm",
+          "access": "R",
+          "desc": "Timer m current count value（m=5：group5）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "timcntn",
+          "access": "R",
+          "desc": "Timer n current count value（n=4：group5）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIM45COUNT",
+      "meta": {
+        "offset": "0x000000c4",
+        "description": "TIM45COUNT",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "timcntm",
+          "access": "R",
+          "desc": "Timer m current count value（m=5：group5）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "timcntn",
+          "access": "R",
+          "desc": "Timer n current count value（n=4：group5）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CNT01VAL",
+      "meta": {
+        "offset": "0x000000c8",
+        "description": "每寄存器含 2 个 16-bit 输入脉冲计数值（edge count mode 输出），字段名 `Cntmval` / `Cntnval`。整体 reset = `0x0000_0000`。本寄存器组的 `CNT45VAL` 见下方独立子节。",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "cntmval",
+          "access": "R",
+          "desc": "Counter m captured input pulse number value（m=5：group5）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "cntnval",
+          "access": "R",
+          "desc": "Counter n captured input pulse number value（n=4：group5）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CNT45VAL",
+      "meta": {
+        "offset": "0x000000d0",
+        "description": "CNT45VAL",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "cntmval",
+          "access": "R",
+          "desc": "Counter m captured input pulse number value（m=5：group5）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "cntnval",
+          "access": "R",
+          "desc": "Counter n captured input pulse number value（n=4：group5）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWM23LOAD",
+      "meta": {
+        "offset": "0x0000003c",
+        "description": "",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "loadm",
+          "access": "R/W",
+          "desc": "Counter load m value（m=5：group5-channel11/10）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "loadn",
+          "access": "R/W",
+          "desc": "Counter load n value（n=4：group4-channel9/8）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWM23COUNT",
+      "meta": {
+        "offset": "0x00000048",
+        "description": "",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "countm",
+          "access": "R",
+          "desc": "Counter m current value（m=5：group5-channel11/10）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "countn",
+          "access": "R",
+          "desc": "Counter n current value（n=4：group4-channel9/8）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWM1CMP",
+      "meta": {
+        "offset": "0x00000054",
+        "description": "",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "compnb",
+          "access": "R/W",
+          "desc": "Comparator B value（n=5：group5-channel11）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "compna",
+          "access": "R/W",
+          "desc": "Comparator A value（n=5：group5-channel10）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWM2CMP",
+      "meta": {
+        "offset": "0x00000058",
+        "description": "",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "compnb",
+          "access": "R/W",
+          "desc": "Comparator B value（n=5：group5-channel11）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "compna",
+          "access": "R/W",
+          "desc": "Comparator A value（n=5：group5-channel10）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWM3CMP",
+      "meta": {
+        "offset": "0x0000005c",
+        "description": "",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "compnb",
+          "access": "R/W",
+          "desc": "Comparator B value（n=5：group5-channel11）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "compna",
+          "access": "R/W",
+          "desc": "Comparator A value（n=5：group5-channel10）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWM4CMP",
+      "meta": {
+        "offset": "0x00000060",
+        "description": "",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "compnb",
+          "access": "R/W",
+          "desc": "Comparator B value（n=5：group5-channel11）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "compna",
+          "access": "R/W",
+          "desc": "Comparator A value（n=5：group5-channel10）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "PWM23DB",
+      "meta": {
+        "offset": "0x0000006c",
+        "description": "",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:26",
+          "name": "",
+          "access": "—",
+          "desc": "Reserved, read as zero",
+          "reserved": true
+        },
+        {
+          "bits": "25",
+          "name": "dbmen",
+          "access": "R/W",
+          "desc": "Dead-band m generator enable（m=5：group5-channel11/10）：`1` = insert dead-band；`0` = pass through",
+          "reserved": false
+        },
+        {
+          "bits": "24",
+          "name": "dbnen",
+          "access": "R/W",
+          "desc": "Dead-band n generator enable（n=4：group4-channel9/8）：`1` = insert dead-band；`0` = pass through",
+          "reserved": false
+        },
+        {
+          "bits": "23:12",
+          "name": "delaym",
+          "access": "R/W",
+          "desc": "Dead-band delay（m=5：group5-channel11/10）：clock tick 数",
+          "reserved": false
+        },
+        {
+          "bits": "11:0",
+          "name": "delayn",
+          "access": "R/W",
+          "desc": "Dead-band delay（n=4：group4-channel9/8）：clock tick 数",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CAP23T",
+      "meta": {
+        "offset": "0x0000008c",
+        "description": "",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "capnmtm",
+          "access": "R",
+          "desc": "Input capture m counter value（m=5：group5-channel10）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "capnmtn",
+          "access": "R",
+          "desc": "Input capture n counter value（n=4：group5-channel8）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CAP23MATCH",
+      "meta": {
+        "offset": "0x00000098",
+        "description": "",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "capnmmatchm",
+          "access": "R/W",
+          "desc": "Input capture m match value（m=5：group5-channel10）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "capnmmatchn",
+          "access": "R/W",
+          "desc": "Input capture n match value（n=4：group5-channel8）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIM23LOAD",
+      "meta": {
+        "offset": "0x000000b4",
+        "description": "",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "timloadm",
+          "access": "R/W",
+          "desc": "Timer m load value（m=5：group5）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "timloadn",
+          "access": "R/W",
+          "desc": "Timer n load value（n=4：group5）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "TIM23COUNT",
+      "meta": {
+        "offset": "0x000000c0",
+        "description": "",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "timcntm",
+          "access": "R",
+          "desc": "Timer m current count value（m=5：group5）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "timcntn",
+          "access": "R",
+          "desc": "Timer n current count value（n=4：group5）",
+          "reserved": false
+        }
+      ]
+    },
+    {
+      "section": 4,
+      "name": "CNT23VAL",
+      "meta": {
+        "offset": "0x000000cc",
+        "description": "",
+        "size": "32"
+      },
+      "fields": [
+        {
+          "bits": "31:16",
+          "name": "cntmval",
+          "access": "R",
+          "desc": "Counter m captured input pulse number value（m=5：group5）",
+          "reserved": false
+        },
+        {
+          "bits": "15:0",
+          "name": "cntnval",
+          "access": "R",
+          "desc": "Counter n captured input pulse number value（n=4：group5）",
+          "reserved": false
+        }
+      ]
+    }
+  ],
+  "errors": []
+}
