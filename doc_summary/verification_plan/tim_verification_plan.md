@@ -102,10 +102,9 @@
 **检查**：C 端读 `Timer1Int Status` 等待 `== 0x1`；调 `mem_read32_(0x5000_000C)` 后再读 status 应回 0。
 
 ### F5: 中断屏蔽（Interrupt Mask）
-**目标**：Control Reg bit2=1 时，`intr` 输出被屏蔽，但 `Int Status` 寄存器仍如实记录中断事件。
-**已有 case**：无（既有 C 测试未覆盖）。
-**检查**：写 Control Reg=0x7（enable + user-defined + mask），运行后 `intr` 在 TB 端应保持低，但 C 端读 `Int Status` 仍能见到 `== 1`。
-**缺口**：**待新建 case（标记 TBD）**。
+**目标**：Control Reg bit2=1 时，`intr` 输出被屏蔽。**RTL 实证（tim.v: `ri_timerNintstatus = ri_timer_int & ~timerintmask`）：`Int Status` 寄存器为屏蔽后状态**，mask=1 时读为 0；raw pending 位不受 mask 影响，解屏蔽后 `Int Status` 立即反映 pending 中断。
+**已有 case**：`timer_int_mask.c`（2026-09-17 新建，PASS）。
+**检查**：写 Control Reg=0x7（enable + user-defined + mask），计数过期后 C 端读 `Int Status == 0`（屏蔽生效）；写 Control Reg=0x3 解屏蔽后 `Int Status == 1`（raw pending 暴露）；读 `int_clr` 清 0。
 
 ### F6: Timer1/2 双通道独立与并行
 **目标**：同一 TIM 实例内 Timer1 与 Timer2 的 Control Reg、Load Count、Current Value、Int Status 完全独立，可并行使能不同模式与不同 load value。
@@ -224,7 +223,7 @@ soc_top_test_base (extends uvm_test)
 | `timer_test`（既有） | `printf("\ntimer test successfully\n")` + `cpu_flag_addr=0x2002` + TB `UVM_CASE_PASS` |
 | `timer_freerun_smoke` (TBD) | 计数器回卷后 Current Value 在 `[0x400, 0x000]` 循环 + `sim_end()` |
 | `timer_dual_ch_parallel` (TBD) | Timer1/Timer2 状态独立，各自 status 与 counter 互不干扰 |
-| `timer_int_mask` (TBD) | mask=1 时 TB 端 `intr` 保持低，但 Int Status 仍 == 1 |
+| `timer_int_mask` | mask=1 时计数过期后 Int Status 保持 0（IntStatus 为屏蔽后状态，tim.v: `raw & ~mask`）；写 ControlReg 解屏蔽后 pending 中断暴露为 Int Status == 1；int_clr 读清零 |
 | `timer_reset_default` (TBD) | 复位后 10 个寄存器值与 §1.2 reset 表一致 |
 | `timer_etb_hw_trig` (TBD) | TB 端 ETB trigger 事件 → counter 自动重载 Load Count |
 | `timer_vic_route` (TBD) | TB 端 cpu_intr[N] 上升沿匹配 System Overview 中断号 |
@@ -280,12 +279,13 @@ c_case/
 │   └── map_test.c                (F8, F9：整片地址空间 read 0 检查)
 ├── timer/
 │   └── timer_test.c              (F2, F4：Timer1 user-defined + 中断产生与清除；既有)
-├── timer/                        (TBD 新增)
-│   ├── timer_freerun_smoke.c     (F1, F7)
-│   ├── timer_dual_ch_parallel.c  (F6, F8)
-│   ├── timer_int_mask.c          (F5, F7)
-│   ├── timer_reset_default.c     (F7, F9)
-│   └── timer_mirror_T1_T7.c      (F2, F4：7 个实例回归)
+├── timer_freerun_smoke/timer_freerun_smoke.c      (F1, F7；已建，PASS)
+├── timer_dual_ch_parallel/timer_dual_ch_parallel.c (F6, F8；已建，PASS)
+├── timer_int_mask/timer_int_mask.c                (F5, F7；已建，PASS)
+├── timer_reset_default/timer_reset_default.c      (F7, F9；已建，PASS)
+├── timer_mirror/timer_mirror_T1_T7.c              (F2, F4：7 个实例回归；已建，PASS)
+
+（注：make_hex 会链接 C_TEST 同目录下所有 .c，故每个新用例独立目录）
 ```
 
 ### 测试注册
