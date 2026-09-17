@@ -12,6 +12,7 @@ export LIGHT_ROOT := $(shell pwd)
 #timer/timer_test.c
 #wdt/wdt_test.c
 C_TEST = timer/timer_test.c
+UTEST ?= soc_top_for_c_case_test
 
 ifeq ($(findstring dma_test, ${C_TEST}), dma_test)
   DEF =
@@ -63,7 +64,7 @@ comp_vip:
 		-top tb_top
 
 run: ccomp
-	./simv -l simv.log +UVM_TESTNAME=soc_top_for_c_case_test
+	./simv -l simv.log +UVM_TESTNAME=$(UTEST)
 
 run_vip:
 	./simv -l simv.log +UVM_TESTNAME=soc_top_smoke_test

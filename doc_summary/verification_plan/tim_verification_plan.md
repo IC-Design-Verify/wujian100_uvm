@@ -225,8 +225,8 @@ soc_top_test_base (extends uvm_test)
 | `timer_dual_ch_parallel` (TBD) | Timer1/Timer2 状态独立，各自 status 与 counter 互不干扰 |
 | `timer_int_mask` | mask=1 时计数过期后 Int Status 保持 0（IntStatus 为屏蔽后状态，tim.v: `raw & ~mask`）；写 ControlReg 解屏蔽后 pending 中断暴露为 Int Status == 1；int_clr 读清零 |
 | `timer_reset_default` (TBD) | 复位后 10 个寄存器值与 §1.2 reset 表一致 |
-| `timer_etb_hw_trig` (TBD) | TB 端 ETB trigger 事件 → counter 自动重载 Load Count |
-| `timer_vic_route` (TBD) | TB 端 cpu_intr[N] 上升沿匹配 System Overview 中断号 |
+| `timer_etb_hw_trig`（已建 `soc_top_timer_etb_trig_test` + `timer_etb_hw_trig.c`，PASS） | TB XMR force ETB-on（待 C 写完 ControlReg=0x12）→ 软件未写 enable 而 IntStatus 置 1（硬启动）；TB 捕获 `timer0_tim1_etb_trig` 脉冲后 force ETB-off → C 端确认 ControlReg bit0==0 且 CurrentValue==0（F3+F11） |
+| `timer_vic_route`（已建 `soc_top_timer_vic_route_test`，PASS） | TB 轮询 `x_cpu_top.pad_vic_int_vld`，TIM0 Timer1/Timer2 中断分别在 bit17/bit18 观测到置位，匹配 System Overview 中断号（F10） |
 | `addr_map`（既有） | 各地址空间 read value 与期望一致；TIM 区域（待确认 map_test 是否覆盖 0x5000_0000~0x5000_03FF） |
 | `timer_mirror_T1_T7` (TBD) | TIM1 ~ TIM7 与 TIM0 行为镜像，全部 `sim_end()` |
 
