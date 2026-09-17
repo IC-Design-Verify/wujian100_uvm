@@ -24,7 +24,7 @@ GPIO 是 SoC 的通用 I/O 控制器，**单实例**提供 **32 路 GPIO**（GPI
 
 依据 System Overview 章节：
 
-- **GPIO 寄存器基地址**：`0x6000_4000` ~ `0x6001_BFFF`（16 KB + 64 KB，APB1 子映射 P5）。
+- **GPIO 寄存器基地址**：`0x6001_8000` ~ `0x6001_BFFF`（16 KB，APB1 子映射 P5）。
 - 总线接入：通过 `apb1_sub_top` 的 APB1 直连接口（`apb1_gpio_psel_s5` / `apb1_gpio_paddr` / `apb1_xx_pprot` 等）路由到 `aou_top` 内的 `gpio0_sec_top`（不在 LS AHB 总线矩阵上，是 AOU 子系统的成员）。
 - **PAD 接入**：32 路 GPIO 通过 `wujian100_open_top.v` 中的 32 个 `PAD_DIG_IO` 单元接到 `PAD_GPIO_0` ~ `PAD_GPIO_31`。
 - **ETB 触发**：32-bit `gpio0_etb_trig` 接入 SoC ETB 总线。
@@ -278,5 +278,6 @@ User Guide 给出的 GPIO 配置示例：
 - **寄存器数量与 offset**：§4.1 Memory Map 共 11 个有效寄存器（offset `0x00`/`0x04`/`0x08`/`0x30`/`0x34`/`0x38`/`0x3C`/`0x40`/`0x44`/`0x4C`/`0x50`），与 User Guide Table 8-1 及 `General-purpose_I_O_GPIO_registers.md` 完全一致（含 `0x0C`~`0x2C`/`0x48` reserved gap）。
 - **字段描述**：§4.2 ~ §4.12 中每个字段的位域、访问类型、复位值均与 User Guide Tables 8-2 ~ 8-12 一致；`gpio_ctl`/`gpio_direction` 等每 bit 含义字段已逐条记录。
 - **端口列表**：§3.1 `gpio0_sec_top` 端口集合（17 个：APB 10 + trust 预留 2 + `gpio_ext_porta[31:0]` + `gpio_porta_dr[31:0]` + `gpio_porta_ddr[31:0]` + `gpio_intrclk_en` + `gpio_intr_flag` + `gpio0_etb_trig[31:0]`）与 RTL `module gpio0_sec_top(...);` 声明逐项核对一致。
-- **结构挂载**：§1.2 中 GPIO 在 APB1 P5（`0x6000_4000`~`0x6001_BFFF`）的分配与 Peripheral Address Map 一致；GPIO 中断号 16 与 System Overview Table 1-4 一致；GPIO 通过 `aou_top` 接入（不在 LS AHB 总线）已明确。
+- **结构挂载**：§1.2 中 GPIO 在 APB1 P5（`0x6001_8000`~`0x6001_BFFF`）的分配与 Peripheral Address Map 一致；GPIO 中断号 16 与 System Overview Table 1-4 一致；GPIO 通过 `aou_top` 接入（不在 LS AHB 总线）已明确。
+- **GPIO 基地址修正**：§1.2 与 §8 结构挂载中 GPIO 寄存器基地址曾误写为 `0x6000_4000`（与 RTC 基址冲突），已于 2026-09-16 按 User Guide Peripheral Address Map（_src/userguide.txt L270）与 RTL wujian100_open/soc/params/apb1_params.v L25 (`APB_LEAF_SLV5_START_ADDR = 32'h60018000`) 修正为 `0x6001_8000`，范围 `0x6001_8000` ~ `0x6001_BFFF`。
 - **存疑项**：§6.2 与 §7.2 已逐项列出 trust/pprot 预留、`gpio_ctl` Reset Value 文本疑误、Work Flow 方向描述反向、`gpio_porta_int_clr`/`gpio_int_clr` 命名差异等差异，未在文档中掩盖。

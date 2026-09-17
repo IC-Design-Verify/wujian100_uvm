@@ -209,7 +209,7 @@ wujian100_open_top (顶层，含 PAD 环、PMU 顶层互连)
 | `0x6000_0800`~`0x6000_0BFF` | TIM5 | 1 KB | P2 | Timer 5 |
 | `0x6000_0C00`~`0x6000_0FFF` | TIM7 | 1 KB | P3 | Timer 7 |
 | `0x6002_8000`~`0x6002_8FFF` | USI1 | 16 KB | P4 | USI1 |
-| `0x6000_4000`~`0x6001_BFFF` | GPIO | 16 KB | P5 | GPIO |
+| `0x6001_8000`~`0x6001_BFFF` | GPIO | 16 KB | P5 | GPIO |
 | `0x6000_4000`~`0x6000_7FFF` | RTC | 16 KB | P6 | RTC |
 | `0x6000_8000`~`0x6000_BFFF` | Dummy | 16 KB | P7 | apb1_dummy_top1 |
 | `0x6000_C000`~`0x6000_FFFF` | Dummy | 16 KB | P8 | apb1_dummy_top2 |
@@ -357,4 +357,5 @@ wujian100_open_top (顶层，含 PAD 环、PMU 顶层互连)
 - **地址映射条目**：本文件 §4 表格内容与 User Guide userguide.txt 行 156–398 完全一致（区间、Size、IP 名、Master/Slave 编号逐项核对通过）。APB0 中 `0x5002_0000~0x5002_3…` 的截断区段已标注待核对。
 - **端口列表**：§3 表格端口集合与 `wujian100_open_top.v` 的 `module ... ();` 端口声明一致；按方向（input/output/inout）逐项核对，PAD 数量（时钟 4 + 复位 1 + JTAG 2 + GPIO 32 + PWM 12 + PWM_FAULT 1 + USI 12 = 64 个 PAD + 4 个 OSC）无误。
 - **结构挂载关系**：§2 子系统挂载图与 RTL `grep "^\s*\S+\s+u_"` 实例化结果一致；`pdu_top` 内确实包含 `x_main_bus_top`（ahb_matrix_top）、`x_sub_ls_top`（ls_sub_top）、`x_sub_apb0_top`（apb0_sub_top）、`x_sub_apb1_top`（apb1_sub_top）；`retu_top` 内含 `x_smu_top`；`smu_top` 内含 `x_sms_top`。
+- **GPIO 基地址修正**：§4.2 GPIO 行起始地址曾误写为 `0x6000_4000`（与 RTC 基址冲突），已于 2026-09-16 按 User Guide Peripheral Address Map（_src/userguide.txt L270）与 RTL wujian100_open/soc/params/apb1_params.v L25 (`APB_LEAF_SLV5_START_ADDR = 32'h60018000`) 修正为 `0x6001_8000`，范围 `0x6001_8000` ~ `0x6001_BFFF`。
 - **存疑项**：§6.2 与 §7.2 已逐项列出不一致点和待核对内容，未在文档中掩盖。
