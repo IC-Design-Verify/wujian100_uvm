@@ -24,5 +24,6 @@
 `include "soc_top_rtc_dfx_test.svh"
 `include "soc_top_pwm_dfx_test.svh"
 `include "soc_top_usi_dfx_test.svh"
+`include "soc_top_dma_dfx_test.svh"
 
 `endif

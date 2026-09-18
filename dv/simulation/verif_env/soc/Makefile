@@ -16,6 +16,8 @@ UTEST ?= soc_top_for_c_case_test
 
 ifeq ($(findstring dma_test, ${C_TEST}), dma_test)
   DEF =
+else ifeq ($(findstring dma_, ${C_TEST}), dma_)
+  DEF =
 else ifeq ($(findstring gpio_test, ${C_TEST}), gpio_test)
   DEF = USE_APB1+USE_APB1_GPIO
 else ifeq ($(findstring gpio_, ${C_TEST}), gpio_)
