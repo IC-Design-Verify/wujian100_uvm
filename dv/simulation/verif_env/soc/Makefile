@@ -18,6 +18,8 @@ ifeq ($(findstring dma_test, ${C_TEST}), dma_test)
   DEF =
 else ifeq ($(findstring gpio_test, ${C_TEST}), gpio_test)
   DEF = USE_APB1+USE_APB1_GPIO
+else ifeq ($(findstring gpio_, ${C_TEST}), gpio_)
+  DEF = USE_APB1+USE_APB1_GPIO
 else ifeq ($(findstring usi_spi_test, ${C_TEST}), usi_spi_test)
   DEF = USE_APB0+USE_APB0_USI+USI_SPI
 else ifeq ($(findstring usi_i2c_test, ${C_TEST}), usi_i2c_test)
