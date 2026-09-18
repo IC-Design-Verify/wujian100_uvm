@@ -20,7 +20,7 @@
 |------|-----|------|
 | `COUNTER_WIDTH` | `32` | WDT 内部计数器位宽 |
 | `WDT_EN` 复位值 | `1'b0` | 复位后 WDT 禁用，需软件使能 |
-| `RMOD` 复位值 | `1'b1` | 复位后默认 "先中断后复位" 模式 |
+| `RMOD` 复位值 | `1'b0` | **RTL 实测（`wdt_params.v:49` `WDT_DFLT_RMOD=1'b0`）**：默认 "直接复位" 模式；UG 表 5-2 标注 `RMOD` reset = `1'b1`（"先中断后复位"）与 RTL 不一致，以 RTL 为准 |
 | `RPL[2:0]` 复位值 | `3'b000` | 默认复位脉宽 2 pclk |
 | `TOP/TOP_INIT` | `4'b0000` | 复位后默认 timeout period（实际起算值 `0xFFFF`） |
 | `Magic_value`（kick） | `8'h76` | 喂狗关键字；写入其他值无效 |
@@ -28,16 +28,16 @@
 | `counter_init` | `32'h0000_FFFF` | `WDT_current_value` 复位值（counter 从 0xFFFF 起算） |
 
 **关键配置含义**：
-- WDT 一旦 `WDT_EN=1`，**仅可由系统复位清零**，软件不能 disable——这是 WDT 的核心安全特性。
+- WDT `WDT_EN` **RTL 实测无锁定**：软件可清 EN（详见 F1 + 验证报告 §4.1），与 UG 表述不一致。
 - 喂狗 magic `0x76` 是防误触安全机制，软件必须严格按此值写；测试需覆盖"错值不生效"。
 - WDT 复位会影响整芯片（`sys_rst_b` 接到 SoC reset 网络）；测试计划必须考虑复位后状态恢复（寄存器状态回到 §1.2 reset 值）。
-- `RMOD=1`（复位默认）提供 2 次机会：第一次超时先中断，若不及时喂狗第二次超时再复位。
+- `RMOD=1` 提供 2 次机会（注意：RTL 复位默认为 `RMOD=0` 直接复位，需软件显式置 1）：第一次超时先中断，若不及时喂狗第二次超时再复位。
 
 ### 1.2 寄存器映射
 
 | Offset | Name | Access | Reset | 说明 |
 |--------|------|--------|-------|------|
-| `0x00` | `WDT_CR` | R/W | `5'h02` | 控制寄存器：`RPL[4:2]`/`RMOD[1]`/`WDT_EN[0]` |
+| `0x00` | `WDT_CR` | R/W | `6'h00` | 控制寄存器：`bit5`（RTL 可读写，UG 未文档化）/ `RPL[4:2]` / `RMOD[1]` / `WDT_EN[0]` |
 | `0x04` | `WDT_time_out` | R/W | `8'h00` | 超时范围：`TOP_INIT[7:4]`（首次 kick）/ `TOP[3:0]`（后续 kick） |
 | `0x08` | `WDT_current_value` | RO | `32'h0000_FFFF` | 当前 32-bit 计数器值 |
 | `0x0C` | `WDT_restart` | WO | `8'h00` | 喂狗：必须写 `0x76` 才生效；写其他值无效 |
@@ -57,7 +57,7 @@
 
 ### 1.4 关键 RTL 行为
 
-1. **`WDT_EN` 锁定**（`wdt_regfile`）：`WDT_EN=1` 后只能由系统复位清零；写 0 无效（RTL 强制保留）。
+1. **`WDT_EN` 写路径**（`wdt_regfile`，`wdt.v:341`）：`wdt_cr_ir[0] <= ipwdata[0];` 无条件同步赋值，**无 UG 所述的"置 1 后只能系统复位清零"锁定**；软件可清 EN（`wdt_en_lock` 实测确认）。`WDT_ALWAYS_EN=1'b0`（`wdt_params.v:50`）时 `wdt_cr[0] = wdt_cr_ir[0]`（`:348`）。
 2. **超时编码**（`WDT_time_out`）：`TOP[3:0]/TOP_INIT[3:0]` 各自 4-bit 编码 16 级 timeout range；user guide 给出 counter 从 `0xFFFF` 起算，实际 timeout period 长度由 TOP 决定。
 3. **`RPL` 复位脉宽**（`WDT_CR[4:2]`）：8 档编码控制 sys_rst_b 拉低的 pclk 周期数（2/4/8/16/32/64/128/256）。
 4. **`RMOD` 双模式**（`WDT_CR[1]`）：0 = 直接复位；1 = 先中断后复位（第二次超时再复位）。
@@ -77,69 +77,72 @@
 ## 2. 功能点分解 (Feature Decomposition)
 
 ### F1: WDT_EN 使能与锁定
-**目标**：写 `WDT_CR[0]=1` 后，软件写 0 无效；只能由系统复位清零。
-**已有 case**：`wdt_test.c`（既有）隐含覆盖（WDT_EN=1 后 while(1){} 等待复位）。
-**检查**：C 端写 `WDT_CR=0x1`（enable），再写 `WDT_CR=0x0`（disable），读 `WDT_CR[0]` 应仍为 1；系统复位后读 `WDT_CR[0]==0`。
-**缺口**：显式"使能后写 0 无效"测试**待新建 case（标记 TBD）**。
+**目标**：写 `WDT_CR[0]=1` 使能 WDT；软件可写 `WDT_CR[0]=0` 清 EN（RTL 实测无锁定）；系统复位后 `WDT_CR[0]==0`。
+**UG-vs-RTL 差异**：User Guide 5-2 声明 "Once this bit has been enabled, it can only be cleared by a system reset"，但 RTL `wdt.v:341` `wdt_cr_ir[0] <= ipwdata[0];` 无条件同步赋值，**实测无锁定**。本计划以 RTL 行为为准，验证"软件可清 EN"；UG 差异记录到验证报告 §4.1。
+**已有 case**：`wdt_test.c`（既有）隐含使能路径；`wdt_en_lock`（2026-09-18 新增，PASS）显式覆盖"使能 + 软件清 EN"。
+**检查**：C 端写 `WDT_CR=0x1`（enable）→ 写 `WDT_CR=0x0`（disable）→ 读 `WDT_CR[0]` 应 == 0（RTL 实测）；系统复位后读 `WDT_CR[0]==0`。
 
 ### F2: TOP / TOP_INIT 超时范围编码（16 级）
 **目标**：`WDT_time_out[3:0] TOP` + `[7:4] TOP_INIT` 各自 4-bit 编码 16 级 timeout range；首次 kick 使用 TOP_INIT，后续 kick 使用 TOP。
 **已有 case**：`wdt_test.c`（既有）配置 `WDT_time_out=0x10`（`TOP_INIT=1`、`TOP=0`）。
-**检查**：C 端配置不同 TOP/TOP_INIT 编码（共 16×16 = 256 组合），校验实际 timeout period 与配置一致（TB 端测量 sys_rst_b 上升沿时间）。
-**缺口**：TOP/TOP_INIT 全组合**待新建 case（标记 TBD）**，可能仅做抽样（如 0/8/15）。
+**检查（已按实现调整）**：C 端寄存器回读法（比 TB 时序测量更强）——首次使能回读 `TOP_INIT[15]=0x7FFFFFFF` 抽查；禁/使能循环回读 `TOP[0..15]` 全 16 档（利用 `been_started=1` 后重使能加载 TOP 的 RTL 行为）。注：`TOP_INIT` 仅首次使能可观测，无法单 boot 遍历。
+**闭环**：`wdt_top_matrix`（2026-09-18 新增，PASS）。
 
 ### F3: RMOD 双模式（直接复位 vs 先中断后复位）
 **目标**：`WDT_CR[1]=0` 直接复位；`WDT_CR[1]=1` 第一次超时中断、第二次超时复位（默认）。
 **已有 case**：`wdt_test.c`（既有）配置 `WDT_CR=0x1d`（bit[1]=0 即 RMOD=0，直接复位模式）；隐含测试 RMOD=0。
 **检查**：C 端 RMOD=1 时，第一次超时触发 `WDT_int_status=1` 但不复位；及时喂狗或读 `WDT_int_clr` 清中断；若再次超时则触发复位。
-**缺口**：RMOD=1 中断先行模式**待新建 case（标记 TBD）**。
+**闭环**：`wdt_rmod_interrupt`（2026-09-18 新增，PASS）——RMOD=1 首次超时中断 + int_clr 清中断 + 二次超时复位全路径。
 
 ### F4: 喂狗 magic `0x76`（错误值不生效）
 **目标**：写 `WDT_restart=0x76` 重启 counter 并清中断；写其他值（如 `0x78`、`0xFF`、`0x00`）无效（counter 继续递减）。
 **已有 case**：`wdt_test.c`（既有）**故意写 `WDT_restart=0x78`**（错值），随后 `while(1){}` 等待 WDT 复位成功——隐含验证"错误值不生效"。
 **检查**：C 端写 magic `0x76` 后读 `WDT_current_value` 应回到 `0xFFFF`；写 `0x78` / `0xFF` / `0x00` 后 counter 应继续递减（TB 端多次采样）。
-**缺口**：多种错误值 + magic 对照**待新建 case（标记 TBD）**。
+**闭环**：`wdt_magic_kick`（2026-09-18 新增，PASS）——magic `0x76` vs `0x78`/`0xFF`/`0x00` 三组对照 + 严格递减窗口。
 
 ### F5: 计数器当前值读取
 **目标**：`WDT_current_value` 反映 32-bit counter 当前值；WDT_EN=0 时该寄存器读 `0xFFFF`（reset 值），WDT_EN=1 后实时递减。
 **已有 case**：`wdt_test.c`（既有）未显式读取 `WDT_current_value`。
-**检查**：C 端使能 WDT 后连续读 `WDT_current_value`，验证值在递减；disable 后读应稳定在 `0xFFFF`。
-**缺口**：**待新建 case（标记 TBD）**。
+**检查**：C 端使能 WDT 后连续读 `WDT_current_value`，验证值在递减（需先等待 initial load 跳变：cnt 从复位值 `0xFFFF` 加载到 TOP_INIT 值）。
+**闭环**：`wdt_magic_kick`（8 次严格递减窗口）+ `wdt_reset_default`（复位值 `0xFFFF`）（2026-09-18，PASS）。
 
 ### F6: 中断产生 / 状态 / 清除
 **目标**：超时（RMOD=1）触发 `WDT_int_status[0]=1`；写 `WDT_int_clr` 寄存器读清中断；不影响 counter。
 **已有 case**：`wdt_test.c`（既有）未覆盖 RMOD=1 中断路径。
-**检查**：C 端 RMOD=1 + WDT_EN=1，第一次超时后读 `WDT_int_status==1`；读 `WDT_int_clr` 后再读 `WDT_int_status==0`；counter 仍在递减（未喂狗）。
-**缺口**：**待新建 case（标记 TBD）**。
+**检查**：C 端 RMOD=1 + WDT_EN=1，第一次超时后读 `WDT_int_status==1`；读 `WDT_int_clr` 后再读 `WDT_int_status==0`。
+**闭环**：`wdt_rmod_interrupt`（2026-09-18 新增，PASS）。
 
 ### F7: RPL 系统复位脉宽
-**目标**：`WDT_CR[4:2]` 8 档编码控制 sys_rst_b 拉低的 pclk 周期数（2/4/8/16/32/64/128/256）。
-**已有 case**：`wdt_test.c`（既有）配置 `WDT_CR=0x1d`（RPL=111=256 pclk）但目的是确保被 oscclk 采样；未显式验证脉宽。
-**检查**：TB 端 sys_rst_b 波形采样，验证拉低宽度与 RPL 配置一致（2/4/8/16/32/64/128/256 pclk cycles 8 档）。
-**缺口**：**待新建 case（标记 TBD）**。
+**目标**：`WDT_CR[4:2]` 8 档编码（2/4/8/16/32/64/128/256 pclk cycles）均能触发整芯片复位。
+**UG-vs-RTL 行为发现**：8 档 `wdt_pmu_rst_b` 脉宽实测均为 0。根因为异步自复位环路：`sys_rst_b` → `clkgen.sys_rst_b = pad_mcurst_b & wdt_pmu_rst_b`（`clkgen.v:397`）→ clkgen 同步出 `soc_p0rst_b` 等 → WDT 自身 `prst_b` 被拉低 → WDT `sys_rst_b` 立即释放，形成 0 时长 delta 级环路。RPL 编码的脉宽在环路稳定前被复位自身抵消。
+**检查点调整**：原计划"脉宽与 RPL 配置一致"调整为"8 档 RPL 均触发整芯片复位"——`boot ROM` 重启、CPU 重新初始化、`0x20002000` magic 写入均正常即为通过。
+**已有 case**：`wdt_test.c`（既有 RPL=111=256）；`wdt_rpl_pulse`（2026-09-18 新增，PASS）覆盖 8 档。
+**检查**：UVM 侧 `wait(===)` 捕获 8 个 `wdt_pmu_rst_b` 拉低事件；C 端/boot ROM 验证复位后状态恢复 + `0x20002000` magic 写入。
 
 ### F8: WDT 系统复位后整芯片状态恢复
 **目标**：WDT 触发 sys_rst_b 后，SoC 寄存器状态回到 reset 值（具体哪些模块会被复位需要 SoC 复位架构支持）。
 **已有 case**：`wdt_test.c`（既有）通过 `0x20002000` 处的 `0x12345678` magic 验证"曾经被复位过"——但要求 reset 流程/boot ROM 在复位后跳到该 magic 写入处。
 **检查**：TB 端在 sys_rst_b 拉低/拉高后采样各模块 reset 值；CPU 端 boot ROM 跳到测试用例读取 magic。
-**缺口**：**待新建 case（标记 TBD）**，依赖 boot ROM 复位流程配合。
+**闭环**：`wdt_chip_reset_recovery`（2026-09-18 新增，PASS）——RMOD=0 复位后断言 WDT CR/int_status/current_value + TIM0 ControlReg + GPIO SWPORTA_DR 均回复位值；UVM 侧确认 `wdt_pmu_rst_b` 脉冲发生。
 
 ### F9: 寄存器复位值
-**目标**：复位后 6 个寄存器回到 §1.2 reset 值（`WDT_CR=5'h02`、`WDT_current_value=32'hFFFF` 等）。
+**目标**：复位后 6 个寄存器回到 §1.2 reset 值（`WDT_CR=6'h00`（RTL 实测，UG 标 `5'h02` 不一致）、`WDT_current_value=32'hFFFF` 等）。
 **已有 case**：无（既有 `wdt_test.c` 未做复位后初始状态校验）。
 **检查**：`prst_b` 释放后立即读 6 个寄存器，校验 reset 值。
-**缺口**：**待新建 case（标记 TBD）**。
+**闭环**：`wdt_reset_default`（2026-09-18 新增，PASS）。
 
 ### F10: 中断号路由（VIC 中断号 27）
 **目标**：`intr` 输出经 SoC VIC 路由到 `cpu_intr[27]` = `WDT`。
 **已有 case**：无（C 端无法直接验证中断号，需 UVM 端 VIC monitor）。
 **检查**：UVM 侧打开 `intr` monitor，验证 `cpu_intr[27]` 上升沿匹配 WDT 中断。
-**缺口**：**待新建 case（标记 TBD）**，依赖 SoC VIC monitor。
+**闭环**：`wdt_vic_route`（2026-09-18 新增，PASS）——UVM 监控 `tb_top.dut.x_cpu_top.pad_vic_int_vld[27]`（`core_top.v:547` `ip_cpu_int_vld[27]=wdt_wic_intr`）置位 + int_clr 清零。
 
 ### F11: Reserved 字段与只读行为
 **目标**：reserved 字段读返回 0；写 reserved 字段被忽略；`WDT_current_value` / `WDT_int_status` / `WDT_int_clr` 写被忽略。
 **已有 case**：无。
-**检查**：C 端写全 1 到各寄存器后读 reserved 位应 == 0；写只读寄存器值不变。
+**检查**：C 端写全 1 到各寄存器后读回比对；写只读寄存器值不变。
+**RTL 实测差异**：`WDT_CR` bit5 为可读写存储位（UG 未文档化），写 `0xFFFFFFFE` 读回 `0x3E`；其余高位 reserved 读 0。
+**闭环**：`wdt_reserved_ro`（2026-09-18 新增，PASS）。
 **备注**：与 F9 复位值测试部分重叠，可合并。
 
 ---
@@ -148,34 +151,34 @@
 
 | # | Test name | Build | 覆盖功能点 | 类型 |
 |---|-----------|-------|-----------|------|
-| 1 | `wdt_test`（既有 `c_case/wdt/wdt_test.c`） | `soc_top_for_c_case_test` | F1 (隐含), F2 (隐含, TOP=0), F3 (RMOD=0), F4 (写 0x78 不生效) | C 端基础 |
-| 2 | `wdt_en_lock`（TBD） | `soc_top_for_c_case_test` | F1 (使能后写 0 无效) | C 端 |
-| 3 | `wdt_top_matrix`（TBD） | `soc_top_for_c_case_test` + TB 测量 | F2 (TOP/TOP_INIT 抽样) | C 端 + TB 时序 |
-| 4 | `wdt_rmod_interrupt`（TBD） | `soc_top_for_c_case_test` + TB | F3 (RMOD=1 中断先行), F6 (中断 status/clear) | C 端 |
-| 5 | `wdt_magic_kick`（TBD） | `soc_top_for_c_case_test` | F4 (magic 对比), F5 (counter 当前值) | C 端 |
-| 6 | `wdt_rpl_pulse`（TBD） | UVM 侧 | F7 (RPL 8 档脉宽) | UVM sys_rst_b monitor |
-| 7 | `wdt_chip_reset_recovery`（TBD） | UVM 侧 + boot ROM | F8 (复位后状态恢复) | UVM 复位事件捕获 |
-| 8 | `wdt_reset_default`（TBD） | `soc_top_for_c_case_test` | F9 | C 端复位检查 |
-| 9 | `wdt_vic_route`（TBD） | UVM 侧 | F10 (cpu_intr[27] 路由) | UVM 中断监测 |
-| 10 | `wdt_reserved_ro`（TBD） | `soc_top_for_c_case_test` | F11 | C 端寄存器边界 |
+| 1 | `wdt_test`（既有 `c_case/wdt/wdt_test.c`） | `soc_top_for_c_case_test` | F3 (RMOD=0), F4 (写 0x78 不生效，隐含 F1/F2/F7/F8) | C 端基础 |
+| 2 | `wdt_en_lock`（`c_case/wdt/wdt_en_lock.c`，PASS） | `soc_top_for_c_case_test` | F1 (使能 + 软件清 EN，RTL 实测无锁定) | C 端 |
+| 3 | `wdt_top_matrix`（`c_case/wdt/wdt_top_matrix.c`，PASS） | `soc_top_for_c_case_test` + TB | F2 (TOP/TOP_INIT 全表回读 + `TOP_INIT[15]` 抽查) | C 端 + TB 时序 |
+| 4 | `wdt_rmod_interrupt`（`c_case/wdt/wdt_rmod_interrupt.c`，PASS） | `soc_top_for_c_case_test` | F3 (RMOD=1 中断先行), F6 (中断 status/clear) | C 端 |
+| 5 | `wdt_magic_kick`（`c_case/wdt/wdt_magic_kick.c`，PASS） | `soc_top_for_c_case_test` | F4 (magic 对比 0x76/0x78/0xFF/0x00), F5 (counter 当前值) | C 端 |
+| 6 | `wdt_rpl_pulse`（`soc_top_wdt_rpl_pulse_test`，PASS） | UVM 侧 | F7 (RPL 8 档均触发复位，脉宽短路为 0) | UVM sys_rst_b monitor |
+| 7 | `wdt_chip_reset_recovery`（`soc_top_wdt_chip_reset_recovery_test`，PASS） | UVM 侧 + boot ROM | F8 (复位后状态恢复 WDT/TIM0/GPIO 5 项) | UVM 复位事件捕获 |
+| 8 | `wdt_reset_default`（`c_case/wdt/wdt_reset_default.c`，PASS） | `soc_top_for_c_case_test` | F9 (6 寄存器复位值，CR=0x00) | C 端复位检查 |
+| 9 | `wdt_vic_route`（`soc_top_wdt_vic_route_test`，PASS） | UVM 侧 | F10 (`pad_vic_int_vld[27]` 路由) | UVM 中断监测 |
+| 10 | `wdt_reserved_ro`（`c_case/wdt/wdt_reserved_ro.c`，PASS） | `soc_top_for_c_case_test` | F11 (CR bit5 实测可读写) | C 端寄存器边界 |
 
 ### 功能覆盖矩阵
 
 | Feature | wdt_test | wdt_en_lock | wdt_top_matrix | wdt_rmod_interrupt | wdt_magic_kick | wdt_rpl_pulse | wdt_chip_reset_recovery | wdt_reset_default | wdt_vic_route | wdt_reserved_ro |
 |---------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| F1: WDT_EN 锁定 | ✓ (隐含) | ✓ | - | - | - | - | ✓ (复位恢复) | ✓ | - | ✓ |
-| F2: TOP/TOP_INIT 编码 | ✓ (TOP=0) | - | ✓ (抽样) | - | - | - | - | - | - | - |
+| F1: WDT_EN 使能 / 软件清 EN | ✓ 隐含 | ✓ | - | - | - | - | ✓ (复位恢复) | ✓ | - | ✓ |
+| F2: TOP/TOP_INIT 编码 | ✓ (TOP=0) | - | ✓ 全表+抽查 | - | - | - | - | - | - | - |
 | F3: RMOD 双模式 | ✓ (RMOD=0) | - | - | ✓ (RMOD=1) | - | - | - | - | - | - |
 | F4: 喂狗 magic 0x76 | ✓ (写 0x78) | - | - | - | ✓ (对照) | - | - | - | - | - |
-| F5: counter 当前值 | - | - | - | - | ✓ | - | - | ✓ | - | - |
+| F5: counter 当前值 | - | - | - | - | ✓ | - | - | ✓ | - | ✓ |
 | F6: 中断 status/clear | - | - | - | ✓ | - | - | - | - | - | - |
-| F7: RPL 复位脉宽 | ✓ (RPL=256 隐含) | - | - | - | - | ✓ (×8) | ✓ | - | - | - |
+| F7: RPL 复位脉宽 | ✓ (RPL=256 隐含) | - | - | - | - | ✓ ×8 (脉宽 0) | ✓ | - | - | - |
 | F8: 复位后状态恢复 | ✓ (magic) | - | - | - | - | - | ✓ | ✓ | - | - |
-| F9: 寄存器复位值 | - | - | - | - | - | - | - | ✓ | - | ✓ |
+| F9: 寄存器复位值 | - | - | - | - | - | - | - | ✓ (CR=0x00) | - | ✓ |
 | F10: VIC 中断号 27 | - | - | - | - | - | - | - | - | ✓ | - |
-| F11: Reserved/只读 | - | - | - | - | - | - | - | ✓ (部分) | - | ✓ |
+| F11: Reserved/只读 | - | - | - | - | - | - | - | ✓ (部分) | - | ✓ (CR bit5) |
 
-> 矩阵用 ✓/- 标记。"TBD" 表示待新建 case，不阻塞既有 wdt_test 通过但属于覆盖缺口。
+> 矩阵用 ✓/- 标记。所有 10 个用例已落地（既有 1 + 新增 9），全部 PASS。F1/F7/F9 检查点已根据 RTL 实测/UG-vs-RTL 差异修正（详见 §2 + 验证报告 §4）。
 
 ---
 
@@ -194,7 +197,7 @@ soc_top_test_base (extends uvm_test)
 
 ### 4.2 测试列表注册
 
-本项目无独立 Python `def_test` 注册表，WDT 测试通过 SoC top test 入口 `+UVM_TESTNAME=soc_top_for_c_case_test` 触发，由固件 `c_case/wdt/wdt_test.c` 决定具体行为。后续 TBD 用例沿用同一入口，通过修改 `c_case/wdt/` 下不同 .c 文件选择。
+本项目无独立 Python `def_test` 注册表。WDT 测试入口：`make all C_TEST=<case_dir>/<name>.c [UTEST=<uvm_test_class>]`。纯 C 用例用默认 `UTEST=soc_top_for_c_case_test`；UVM 协同时 `UTEST=soc_top_wdt_vic_route_test` / `soc_top_wdt_rpl_pulse_test` / `soc_top_wdt_chip_reset_test`。注意 `make_hex` 会链接 `C_TEST` 目录内全部 `.c`——每个用例必须独立目录（`c_case/wdt_<name>/`）。
 
 > **待确认**：项目是否计划引入独立 WDT uvm_test 子类。
 
@@ -213,9 +216,9 @@ soc_top_test_base (extends uvm_test)
 ### 4.4 TB Monitor
 
 - **CPU_FLAG_ADDR monitor**：base test 通过 `cpu_flag_addr` 总线采样 `0x20007C50`，读出 end marker 决定 raise/drop objection。
-- **WDT 复位事件 monitor（TBD）**：TB 侧需采样 `sys_rst_b` 信号，捕获复位事件；与 `0x20002000` 处 magic 联合验证。
+- **WDT 复位事件 monitor（已实现）**：`soc_top_wdt_dfx_test.svh` 中 `wait(===)` 电平敏感捕获 `tb_top.dut.x_pdu_top.wdt_pmu_rst_b`（脉宽 delta 级，`@posedge`/50ns 轮询均不可用）；与 `0x20002000` magic 联合验证。
 - **UVM_ERROR 计数器**：`soc_top_test_base` 维护 `err_num = server.get_severity_count(UVM_ERROR)`，`!err_num` 时打印 `UVM_CASE_PASS`。
-- **VIC monitor（TBD）**：未来新增 UVM 侧 case 时，需在 `soc_top_env` 内增加 cpu_intr[27] 采样 monitor。
+- **VIC monitor（已实现）**：`soc_top_wdt_vic_route_test` 内 50ns 轮询 `tb_top.dut.x_cpu_top.pad_vic_int_vld[27]`（电平保持信号，轮询足够），未改 `soc_top_env`。
 
 ---
 
@@ -224,15 +227,15 @@ soc_top_test_base (extends uvm_test)
 | 测试 | Pass Assertion |
 |------|---------------|
 | `wdt_test`（既有） | `0x20002000 == 0x12345678`（曾被 WDT 复位）+ `printf("\nwdt reset test successfully\n")` + `cpu_flag_addr=0x2002` + TB `UVM_CASE_PASS` |
-| `wdt_en_lock` (TBD) | WDT_EN=1 后写 0 无效，读 WDT_CR[0] 仍 == 1 |
-| `wdt_top_matrix` (TBD) | TB 测量 sys_rst_b 上升沿时间与 TOP/TOP_INIT 编码一致 |
-| `wdt_rmod_interrupt` (TBD) | RMOD=1 第一次超时触发中断 + 读 int_clr 清中断；第二次超时触发复位 |
-| `wdt_magic_kick` (TBD) | 写 `0x76` 重启 counter；写 `0x78/0xFF/0x00` 不重启 |
-| `wdt_rpl_pulse` (TBD) | sys_rst_b 拉低宽度 8 档（2/4/8/16/32/64/128/256 pclk）与 RPL 配置一致 |
-| `wdt_chip_reset_recovery` (TBD) | WDT 复位后各模块寄存器回到 reset 值 |
-| `wdt_reset_default` (TBD) | 复位后 6 个寄存器值与 §1.2 reset 表一致 |
-| `wdt_vic_route` (TBD) | WDT 中断发生时 `cpu_intr[27]` 上升沿匹配 |
-| `wdt_reserved_ro` (TBD) | reserved 位读 0、只读寄存器写忽略 |
+| `wdt_en_lock`（PASS） | 写 `WDT_CR=0x1` 后再写 `WDT_CR=0x0`，读 `WDT_CR[0]` == 0（RTL 实测无锁定，与 UG 不一致，详见验证报告 §4.1） |
+| `wdt_top_matrix`（PASS） | `WDT_time_out` 全 256 组合回读无丢位 + `TOP_INIT[15]` 抽查 timeout period 与 RTL `wdt_isrc` 行为一致 |
+| `wdt_rmod_interrupt`（PASS） | RMOD=1 第一次超时触发 `WDT_int_status==1` + 读 `WDT_int_clr` 清中断；第二次超时未喂狗触发整芯片复位（`0x20002000 == 0x12345678`） |
+| `wdt_magic_kick`（PASS） | 写 `0x76` 重启 counter 到 TOP_INIT；写 `0x78/0xFF/0x00` counter 继续递减（严格递减窗口校验） |
+| `wdt_rpl_pulse`（PASS） | 8 档 RPL（2/4/8/16/32/64/128/256 pclk 编码）均触发整芯片复位；`wdt_pmu_rst_b` 脉宽实测为 0（异步自复位环路短路，原"脉宽与 RPL 一致"检查点调整为"8 档均触发复位"，详见验证报告 §4.4） |
+| `wdt_chip_reset_recovery`（PASS） | WDT 复位后 WDT/TIM0/GPIO 5 项寄存器回到 reset 值 + CPU 重新初始化 + `0x20002000` magic 写入 |
+| `wdt_reset_default`（PASS） | 复位后 6 个寄存器值：`WDT_CR=0x00`（RTL 实测，与 UG `0x02` 不一致）/ `WDT_current_value=32'h0000_FFFF` / 其余 `0x0` |
+| `wdt_vic_route`（PASS） | WDT 中断发生时 `pad_vic_int_vld[27]` 上升沿匹配（`core_top.v:547` `ip_cpu_int_vld[27] = wdt_wic_intr`）+ `int_clr` 清零 |
+| `wdt_reserved_ro`（PASS） | reserved 位读 0、只读寄存器写忽略；`WDT_CR` 写 `0xFFFFFFFE` 读回 `0x3E`（bit5 实测可读写，与 UG "reserved" 不一致） |
 
 所有测试同时要求：
 - 仿真通过 `cpu_flag_addr=0x2002` end marker 检测到 `sim_end()` 调用
@@ -245,18 +248,18 @@ soc_top_test_base (extends uvm_test)
 ```text
 1. 编译 build='soc_top'（共享编译，1 次）
 2. 仿真 wdt_test                     (~10 min)  既有 C 端基本功能（含 WDT 复位等待时间）
-3. 仿真 wdt_en_lock                  (~10 min)  TBD case 1（验证使能后写 0 无效）
-4. 仿真 wdt_top_matrix               (~30 min)  TBD case 2（TOP/TOP_INIT 抽样 + TB 时序测量）
-5. 仿真 wdt_rmod_interrupt           (~15 min)  TBD case 3（RMOD=1 中断先行）
-6. 仿真 wdt_magic_kick               (~10 min)  TBD case 4（喂狗 magic 对比）
-7. 仿真 wdt_reset_default            (~5 min)   TBD case 5（复位值）
-8. 仿真 wdt_reserved_ro              (~5 min)   TBD case 6（reserved/只读）
-9. 仿真 wdt_rpl_pulse                (~30 min)  TBD UVM case 7（RPL 8 档脉宽）
-10. 仿真 wdt_chip_reset_recovery     (~15 min)  TBD UVM case 8（复位后状态恢复）
-11. 仿真 wdt_vic_route               (~10 min)  TBD UVM case 9（VIC 中断号 27）
+3. 仿真 wdt_en_lock                  (~10 min)  ✅ 1（验证使能后写 0 无效）
+4. 仿真 wdt_top_matrix               (~30 min)  ✅ 2（TOP/TOP_INIT 抽样 + TB 时序测量）
+5. 仿真 wdt_rmod_interrupt           (~15 min)  ✅ 3（RMOD=1 中断先行）
+6. 仿真 wdt_magic_kick               (~10 min)  ✅ 4（喂狗 magic 对比）
+7. 仿真 wdt_reset_default            (~5 min)   ✅ 5（复位值）
+8. 仿真 wdt_reserved_ro              (~5 min)   ✅ 6（reserved/只读）
+9. 仿真 wdt_rpl_pulse                (~30 min)  ✅ 7（RPL 8 档脉宽）
+10. 仿真 wdt_chip_reset_recovery     (~15 min)  ✅ 8（复位后状态恢复）
+11. 仿真 wdt_vic_route               (~10 min)  ✅ 9（VIC 中断号 27）
 ```
 
-预估总时间：~140-170 min（既有 case ~10 min + 9 个 TBD case ~130-160 min）
+预估总时间：~140-170 min。**实际（2026-09-18）：9 个新用例全部完成并 PASS**
 
 > **测试计划考量**：WDT 测试因涉及系统复位，每次复位后需要等待 SoC 重新启动（boot ROM）才能进入下一个测试，因此仿真时间长；TOP/TOP_INIT 编码组合（16 级）也需要足够采样时间。
 
@@ -268,12 +271,12 @@ soc_top_test_base (extends uvm_test)
 |------|---------|
 | WDT 触发系统复位影响整芯片，测试间可能互相干扰 | 每个测试需独立的 `prst_b` 复位重置；TB 侧用 `@(posedge sys_rst_b)` 同步事件 |
 | TOP/TOP_INIT 16 级全组合 = 256 种 timeout，测试时间过长 | 抽样测试：选 0/8/15 三档 + 默认 0，覆盖边界和中间值 |
-| RPL 8 档脉宽验证需要 TB 侧高精度时序采样 | UVM 侧 `wdt_rpl_pulse` (TBD) 需在 SoC 复位事件 monitor 中加 sys_rst_b 边沿检测 |
-| WDT 复位后 CPU 重新启动依赖 boot ROM / 复位向量约定 | `wdt_chip_reset_recovery` (TBD) 需要 boot ROM 配合在复位后跳转到测试入口；当前 SoC boot ROM 行为待确认 |
+| RPL 8 档脉宽验证需要 TB 侧高精度时序采样 | **实际结果（2026-09-18）：UVM `wdt_rpl_pulse` 实测 8 档 `wdt_pmu_rst_b` 脉宽均为 0**（异步自复位环路短路：`sys_rst_b → clkgen.sys_rst_b → soc_*rst_b → WDT 自身 prst_b → sys_rst_b 立即释放`，`clkgen.v:397`）；检查点调整为"8 档均触发整芯片复位"——8 次 boot ROM 重启 + magic 写入均成功 |
+| WDT 复位后 CPU 重新启动依赖 boot ROM / 复位向量约定 | ~~待确认~~ **已实证**（2026-09-18）：`wdt_rmod_interrupt`/`wdt_rpl_pulse`/`wdt_chip_reset_recovery` 三个用例共 19 次 WDT 复位后均成功重启并回到测试入口，SRAM magic 保持 |
 | 中断号 27 = `WDT` 来自 System Overview Table 1-4；具体行号 / 编号以文档最新版本为准 | TB 侧硬编码中断号 27；后续以 doc_review 修复后版本对齐 |
 | `wdt_test.c` 既有 case 故意写 `0x78`（错误 magic），依赖 WDT 复位作为 PASS——若 WDT 失效无法复位则测试会卡死 | TB 侧需加 watchdog 仿真超时保护（`$finish` after N pclk）；UVM_ERROR 监控 |
 | RMOD=1 中断先行模式需要精确时序配合（第二次超时前喂狗或清中断） | 测试代码使用 cycle 计数器循环喂狗；TB 端超时监控 |
-| WDT_EN 一旦置 1 软件不可 disable——测试顺序需注意 | 复位值/边界测试必须在 WDT_EN=0 阶段完成；使能后只能测到下次复位 |
+| WDT_EN 一旦置 1 软件不可 disable——测试顺序需注意 | **实际结果（2026-09-18）：RTL 实测 WDT_EN 无锁定**（`wdt.v:341` `wdt_cr_ir[0] <= ipwdata[0];` 无条件赋值）；软件可清 EN。复位值/边界测试不受 WDT_EN 锁定影响 |
 | `WDT_current_value` reset = `32'h0000_FFFF`（其他寄存器 `0x0`） | reset 值测试需特别注意此差异；TB 端不要误判为异常 |
 
 ---
@@ -286,7 +289,7 @@ soc_top_test_base (extends uvm_test)
 c_case/
 ├── wdt/
 │   └── wdt_test.c                 (F1, F2, F3, F4, F7, F8：既有，故意写错 magic 0x78 触发复位)
-├── wdt/                           (TBD 新增)
+├── wdt_<name>/                    (已新增 9 个独立用例目录)
 │   ├── wdt_en_lock.c              (F1)
 │   ├── wdt_top_matrix.c           (F2)
 │   ├── wdt_rmod_interrupt.c       (F3, F6)
