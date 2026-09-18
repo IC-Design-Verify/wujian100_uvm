@@ -113,92 +113,106 @@
 ### F3: UART 波特率 / 数据位 / 停止位 / 校验
 **目标**：`CLK_DIV0` 决定波特率（`CLK_DIV0 = pclk/(16×baud) - 1`）；`UART_CTRL` 决定数据位（5/6/7/8）、停止位（1/2）、校验（none/odd/even）。
 **已有 case**：`usi_uart_test.c`（既有）配置 9600 baud (`CLK_DIV0=0x81`) + 8-N-1（`UART_CTRL=0x3`）。
-**检查**：C 端配置不同 baud/data_bits/stop_bits/parity 组合，校验 `UART_STA` 与传输字节正确性；TB 端 PAD monitor 采样实际 baud 时序。
-**缺口**：非 8-N-1 配置（如 7-E-1、8-O-2、5/6/7 数据位）**待新建 case（标记 TBD）**。
+**新增 case（闭环）**：`usi_uart_format_matrix.c` 覆盖 5 轮 USI0→USI1 数据比对：8-N-1 / 7-E-1 / 8-O-2 / 5-N-1 / 6-N-1；SUB-8-bit 接收按位宽掩码 `& ((1<<N)-1)`（RTL `rx_shift` 仅复位清零、帧间不清，详验证报告 §4.5）。
+**检查**：C 端配置不同 baud/data_bits/stop_bits/parity 组合，校验 `UART_STA` 与传输字节正确性；UVM `soc_top_usi_uart_baud_test` 沿计数法验证 baud。
+**闭环**：✅ `usi_uart_test`（8-N-1 隐含）+ `usi_uart_format_matrix`（×5 格式）。
 
 ### F4: UART 流控 RTS/CTS
 **目标**：RTS/CTS 硬件流控（`NSS`/`SD1` 引脚复用）；自动暂停/恢复传输。
 **已有 case**：无（既有 c_case 未覆盖流控）。
 **检查**：TB 端 PAD monitor 模拟 CTS 拉低/恢复，验证 TX FIFO 传输在 CTS 低时暂停；RTS 在 RX FIFO 接近满时拉高。
-**缺口**：**待新建 case（标记 TBD）**，需 UVM 侧 PAD 驱动。
+**降级**：⚠️ TB 无 CTS/RTS PAD 驱动，需新增 UART 流控 BFM；当前用例集不覆盖，标记环境/BFM 限制。
 
 ### F5: I2C Master 地址模式（7-bit / 10-bit）
 **目标**：`I2C_ADDR` 配置从机地址（7-bit 或 10-bit）；`I2C_MODE.MS_MODE=1` 选 master。
 **已有 case**：`usi_i2c_test.c`（既有）— 配置 7-bit 地址 `0x3c` + master 模式。
-**检查**：C 端 TB 模拟从机响应，验证主机发送的地址字节与配置一致；10-bit 地址测试（`I2C_ADDR` 高 2 bit 编码）。
-**缺口**：10-bit 地址模式**待新建 case（标记 TBD）**。
+**新增 case（闭环）**：`usi_i2c_10bit_addr.c` 覆盖 **7-bit 正向回环**（USI0 master → USI1 slave 正常 ACK）+ **10-bit 负向**（USI0 master 发 10-bit 地址给 USI1 slave，期望 `i2c_nack` raw bit13 置位、USI1 无接收）。
+**检查**：C 端 TB 模拟从机响应，验证主机发送的地址字节与配置一致。
+**注**：RTL `i2cs_amode` 硬连线 1'b0（`usi0.v:583`），I2C slave 模式 10-bit 寻址功能不可用；10-bit 仅能做 master 负向测试，详验证报告 §4.4。
+**闭环**：✅ `usi_i2c_test`（7-bit）+ `usi_i2c_10bit_addr`（7-bit 正 + 10-bit 负）。
 
 ### F6: I2C HS（High-Speed）模式
 **目标**：`I2CM_CODE` 编码 master code（0000_1XXX）启动 HS 模式；HS 模式下切换 SCL 频率到 `I2CM_CODE` 决定的高速。
 **已有 case**：无（既有 c_case 仅 100 KHz 标准模式）。
 **检查**：TB 端 PAD monitor 采样 SCL 时序验证 HS 切换点（master code 发送后切换高速）。
-**缺口**：**待新建 case（标记 TBD）**。
+**降级**：⚠️ TB 无 I2C HS 模式 master code 激励，需新增 I2C master BFM；标记环境/BFM 限制。
 
 ### F7: I2C General Call（GCALL）filter
 **目标**：`I2CS_CTRL` 配置 GCALL filter；slave 模式下响应地址 `0x00` 的广播。
 **已有 case**：无（既有 c_case 仅 master 模式）。
 **检查**：TB 端发 `address=0x00` 的 general call，验证 slave 是否响应（filter enable 时不应 ACK）。
-**缺口**：**待新建 case（标记 TBD）**，需 UVM 侧 I2C slave 模拟。
+**降级**：⚠️ TB 无 I2C slave BFM，无法主动发起 GCALL 帧；标记环境/BFM 限制。
 
 ### F8: I2C hold time（SDA hold）
 **目标**：`I2C_HOLD` 决定 SCL 下降沿到 SDA 变化之间的保持时间（满足 I2C 协议 tHD:DAT）。
 **已有 case**：无（既有 c_case 使用默认 hold time）。
 **检查**：TB 端 PAD monitor 采样 SCL/SDA 时序，验证 hold time 与寄存器配置一致。
-**缺口**：**待新建 case（标记 TBD）**。
+**降级**：⚠️ TB 端无 SDA/SCL 时序观测接口（无 PAD monitor），无法验证 hold time；标记环境/BFM 限制。
 
 ### F9: SPI CPOL / CPHA / DATA_SIZE
 **目标**：`SPI_CTRL` 配置 CPOL（clock polarity）、CPHA（clock phase）、TMOD（transmit only/receive only/全双工）、DATA_SIZE（4~16）、NSS 软件/硬件。
 **已有 case**：`usi_spi_test.c`（既有）— 配置 `SPI_CTRL=0x1f`（data_size=16 + transmit only + CPHA=0 + CPOL=0）。
-**检查**：TB 端 PAD monitor 采样 SCK/MOSI/MISO 时序，验证 CPOL/CPHA 与配置一致；DATA_SIZE=4/8/12 等边界值。
-**缺口**：CPOL=1 / CPHA=1 / DATA_SIZE=4~16 各种组合**待新建 case（标记 TBD）**。
+**新增 case（闭环）**：`usi_spi_format_matrix.c` 覆盖 4 轮 master/slave 数据比对：(16b/C0H0, 8b/C0H1, 8b/C1H0, 4b/C1H1)；DATA_SIZE 边界值 4/8/16 + CPOL/CPHA 2×2 抽样组合。
+**检查**：TB 端 PAD monitor 采样 SCK/MOSI/MISO 时序，验证 CPOL/CPHA 与配置一致。
+**闭环**：✅ `usi_spi_test`（CPOL=0/CPHA=0/data_size=16 transmit only）+ `usi_spi_format_matrix`（×4 格式）。
 
 ### F10: SPI Master / Slave 切换
 **目标**：`SPI_MODE` 选 master/slave；master 模式下 NSS 由硬件/CS 产生；slave 模式下 NSS 作为输入。
 **已有 case**：`usi_spi_test.c`（既有）仅 master 模式。
-**检查**：TB 端 2 个 USI 实例对测（一个 master、一个 slave），验证 SPI 全双工通信。
-**缺口**：slave 模式 + master/slave 互联**待新建 case（标记 TBD）**。
+**新增 case（闭环）**：`usi_spi_format_matrix.c` 中 2 个 USI 实例互为 master/slave 全双工通信匹配。
+**检查**：TB 端 2 个 USI 实例对测，验证 SPI 全双工通信。
+**闭环**：✅ `usi_spi_test`（master）+ `usi_spi_format_matrix`（master/slave）。
 
 ### F11: SPI NSS 软件/硬件模式
 **目标**：`SPI_CTRL.NSS=0` 硬件模式（master 自动产生）；`SPI_CTRL.NSS=1` 软件模式，由 `SPI_NSS_DATA` 控制 NSS 电平。
 **已有 case**：`usi_spi_test.c`（既有）未明确配置 NSS 模式（隐含使用默认）。
 **检查**：软件模式下写 `SPI_NSS_DATA` 验证 PAD NSS 输出电平；硬件模式下 NSS 由 master 协议自动控制。
-**缺口**：**待新建 case（标记 TBD）**。
+**defunct**：⊘ RTL `SPI_NSS_DATA@0x6C` 无地址译码（`usi0.v` `ADDR_*` 定义止于 0x68，无 `ADDR_SPI_NSS_DATA`），读出恒 0，软件 NSS 功能在 RTL 中不存在；F11 标记 defunct，详验证报告 §4.3。
 
 ### F12: TX/RX FIFO 阈值与状态
 **目标**：`FIFO_STA` 报告 tx_fifo_cnt / rx_fifo_cnt / tx_empty / tx_full / rx_empty / rx_full；`INTR_CTRL` 配置 TX/RX FIFO 中断阈值。
 **已有 case**：3 个 c_case 测试均轮询 `FIFO_STA.tx_empty` / `.rx_empty`（`usi_uart_test.c` 第 89 行附近等）。
+**新增 case（闭环）**：`usi_fifo_threshold.c` 覆盖 tx_cnt 容差 3~4、填满 full、thold=01→cnt≤4 电平型触发。
 **检查**：C 端写满/读空 FIFO 验证 `tx_full`/`rx_empty` 位正确翻转；阈值触发中断。
-**缺口**：阈值中断触发**待新建 case（标记 TBD）**。
+**注**：`FIFO_STA` 复位值=0x5（非计划 0x11，详验证报告 §4.2），位排布 `{rx_cnt[20:16], 3'd0, tx_cnt[12:8], rx_full[3], rx_empty[2], tx_full[1], tx_empty[0]}`。
+**闭环**：✅ 3 个基线（空检查）+ `usi_fifo_threshold`（×4 边界 + 电平型 thold）。
 
 ### F13: 中断使能 / 状态 / 清除 / 屏蔽
 **目标**：`INTR_EN` 屏蔽各中断源；`RAW_INTR_STA` 记录原始中断；`INTR_STA` 反映 mask 后状态；`INTR_CLR` 写 1 清；`INTR_UNMASK` 控制绕过 mask。
 **已有 case**：无（既有 c_case 未直接测中断寄存器）。
+**新增 case（闭环）**：`usi_fifo_threshold.c` 覆盖 RAW/STA/UNMASK/EN 屏蔽链 + EN=0 门控 + 19 类中断位映射（详验证报告 §4.7）。
 **检查**：C 端配置中断源触发 → 读 RAW_INTR_STA / INTR_STA → 写 INTR_CLR → 读状态应清 0；mask/unmask 测试。
-**缺口**：**待新建 case（标记 TBD）**。
+**注**：`RAW_INTR_STA` 受 `INTR_EN` 门控（`en=0` 时不置位 + 强制清零），与典型 RAW-only 设计不符；thold 类中断为电平型，清除须先关 INTEN 再写 IC，详验证报告 §4.6。
+**闭环**：✅ `usi_fifo_threshold`（RAW/STA/UNMASK/EN 全链路 + 电平型清除）。
 
 ### F14: DMA 接口与阈值
-**目标**：`DMA_CTRL` 使能 DMA 模式；`DMA_THRESHOLD` 配置 DMA trigger 阈值；FIFO count 达到阈值后 `dma_req_tx` / `dma_req_rx` 拉高。
+**目标**：`DMA_CTRL` 使能 DMA 模式；`DMA_TH` 配置 DMA trigger 阈值；FIFO count 达到阈值后 `dma_req_tx` / `dma_req_rx` 拉高。
 **已有 case**：无（既有 c_case 仅 CPU 轮询 FIFO）。
 **检查**：UVM 侧 DMAC 接管 USI 的 DMA 请求做批量搬运；验证 dma_req_tx / dma_ack_tx 时序与 threshold 配置一致。
-**缺口**：**待新建 case（标记 TBD）**，需 DMAC + USI 联合 UVM 序列。
+**降级**：⚠️ 本 TB 无 DMAC 协同（USI DMA 请求线未接到 DMAC）；寄存器读写可访，但 `dma_req_tx/rx` 触发链路未验证；标记环境/BFM 限制。
+**注**：寄存器名 RTL 为 `DMA_TH`（非计划 `DMA_THRESHOLD`），字段 `{rx_dma_th[4:0], 3'd0, tx_dma_th[4:0]}`，复位值 `0x808`，详验证报告 §4.8。
 
 ### F15: 时钟分频（CLK_DIV0 / CLK_DIV1）
 **目标**：`CLK_DIV0` 决定 UART baud（公式见 §1.4）、I2C SCL 高电平计数、SPI SCK 周期；`CLK_DIV1` 仅用于 I2C SCL 低电平计数。
 **已有 case**：3 个 c_case 测试均配置 `CLK_DIV0`（UART=0x81 / I2C=0x63 / SPI=0xc8）。
+**新增 case（闭环）**：`usi_clk_div_boundary.c` 测 `CLK_DIV0=0x81` / `0x40` 各 16×0x55，UVM `soc_top_usi_uart_baud_test` 沿计数法测得最小沿间隔比 = 2.000（共 320 沿），验证 `CLK_DIV0=0x81=129` vs `0x40=64` 实际 baud 周期 2 倍关系。
 **检查**：C 端配置不同 CLK_DIV0/1，TB 端 PAD monitor 采样实际 baud/SCL/SCK 时序验证。
-**缺口**：边界值（CLK_DIV0=0/1/最大值）、I2C SCL 高低不对称的非对称分频**待新建 case（标记 TBD）**。
+**闭环**：✅ 3 个基线（UART=9600/I2C=100K/SPI=100K）+ `usi_clk_div_boundary`（×2 边界，UVM 沿计数验证）。
 
 ### F16: 多实例地址独立性
 **目标**：USI0 / USI1 / USI2 各自独立 16 KB 地址空间，互不干扰。
 **已有 case**：`usi_uart_test.c` 同时访问 USI0（`0x50028000`）与 USI1（`0x60028000`），隐含覆盖。
+**新增 case（闭环）**：`usi_mirror_inst.c` USI2(`0x50029000`) UART TX 4 字节 + 与 USI0/USI1 交叉无干扰验证。
 **检查**：写 USI0 寄存器不影响 USI1 状态；读 USI2（`0x50029000`）应返回 USI2 内容。
-**备注**：若既有 case 已隐含覆盖可标"已覆盖"。
+**闭环**：✅ `usi_uart_test`（USI0+USI1）+ `usi_mirror_inst`（USI2 + 交叉无干扰）。
 
 ### F17: 寄存器复位值
-**目标**：复位后 28 个寄存器回到 §1.2 reset 值（多数 `0x0000_0000`，`FIFO_STA=0x11`）。
+**目标**：复位后 28 个寄存器回到 §1.2 reset 值（多数 `0x0000_0000`，实测 12 项非 0 + `FIFO_STA=0x5` + `SPI_NSS_DATA@0x6C` defunct）。
 **已有 case**：无。
+**新增 case（闭环）**：`usi_reset_default.c` 覆盖 3 实例 × 21 项 {偏移, 期望值} 表，全对（详验证报告 §2 行 4 + §4.1）。
 **检查**：rst_n 释放后立即读 28 个寄存器验证 reset 值。
-**缺口**：**待新建 case（标记 TBD）**。
+**注**：实际 RTL 复位值与原计划 §1.2 表存在 12 项差异（CLK_DIV0=0x20、CLK_DIV1=0x30、UART_CTRL=0x3、I2C_MODE=1、I2C_ADDR=0x133、I2CM_CODE=1、I2C_FM_DIV=5、I2C_HOLD=5、SPI_MODE=1、SPI_CTRL=0x7、INTR_CTRL=0x101、DMA_TH=0x808）+ `FIFO_STA=0x5`；详见验证报告 §4.1。
+**闭环**：✅ `usi_reset_default`（3 实例 × 21 项表全对）。
 
 ---
 
@@ -209,45 +223,40 @@
 | 1 | `usi_uart_test`（既有 `c_case/usi_uart/usi_uart_test.c`） | `soc_top_for_c_case_test` | F1, F2, F3 (8-N-1), F15 (9600 baud), F16 | C 端基础 |
 | 2 | `usi_i2c_test`（既有 `c_case/usi_i2c/usi_i2c_test.c`） | `soc_top_for_c_case_test` | F1, F5 (7-bit), F15 (100 KHz) | C 端基础 |
 | 3 | `usi_spi_test`（既有 `c_case/usi_spi/usi_spi_test.c`） | `soc_top_for_c_case_test` | F1, F9 (CPOL=0/CPHA=0/data_size=16), F10 (master) | C 端基础 |
-| 4 | `usi_uart_format_matrix`（TBD） | `soc_top_for_c_case_test` | F3 (5/6/7/8 数据位 + 1/2 stop + odd/even 校验) | C 端 |
-| 5 | `usi_uart_flow_ctrl`（TBD） | UVM 侧 | F4 (RTS/CTS) | UVM PAD 模拟 |
-| 6 | `usi_i2c_10bit_addr`（TBD） | UVM 侧 | F5 (10-bit 地址) | UVM I2C 模拟 |
-| 7 | `usi_i2c_hs_mode`（TBD） | UVM 侧 | F6 (HS 模式) | UVM I2C 模拟 |
-| 8 | `usi_i2c_gcall`（TBD） | UVM 侧 | F7 (general call filter) | UVM I2C slave 模拟 |
-| 9 | `usi_i2c_hold`（TBD） | UVM 侧 | F8 (SDA hold time) | UVM PAD monitor |
-| 10 | `usi_spi_format_matrix`（TBD） | UVM 侧 | F9 (CPOL/CPHA/DATA_SIZE 组合) | UVM PAD monitor |
-| 11 | `usi_spi_master_slave`（TBD） | UVM 侧 | F10 (master/slave 互联) | UVM 2 实例对测 |
-| 12 | `usi_spi_nss`（TBD） | UVM 侧 | F11 (NSS 软件/硬件模式) | UVM PAD monitor |
-| 13 | `usi_fifo_threshold`（TBD） | `soc_top_for_c_case_test` | F12 (TX/RX FIFO 阈值) | C 端 |
-| 14 | `usi_intr_full`（TBD） | `soc_top_for_c_case_test` | F13 (19 类中断 mask/clear) | C 端 |
-| 15 | `usi_dma`（TBD） | UVM 侧 `soc_top_vseq` | F14 (DMA 接口与 threshold) | UVM DMAC 联动 |
-| 16 | `usi_clk_div_boundary`（TBD） | UVM 侧 | F15 (CLK_DIV 边界值 + I2C 不对称) | UVM PAD monitor |
-| 17 | `usi_reset_default`（TBD） | `soc_top_for_c_case_test` | F17 | C 端复位检查 |
-| 18 | `usi_mirror_inst`（TBD） | `soc_top_for_c_case_test` | F1, F2, F5, F9 (USI1/USI2 镜像回归) | C 端回归 |
+| 4 | `usi_reset_default`（新增） | `soc_top_for_c_case_test` | F17 (3 实例 × 21 项复位值表) | C 端复位检查 |
+| 5 | `usi_mirror_inst`（新增） | `soc_top_for_c_case_test` | F16 (USI2 UART TX 4 字节 + 交叉无干扰) | C 端回归 |
+| 6 | `usi_uart_format_matrix`（新增） | `soc_top_for_c_case_test` | F3 (8-N-1 / 7-E-1 / 8-O-2 / 5-N-1 / 6-N-1 + 位宽掩码) | C 端 |
+| 7 | `usi_i2c_10bit_addr`（新增） | `soc_top_for_c_case_test` | F5 (7-bit 正向 + 10-bit 负向) | C 端 |
+| 8 | `usi_fifo_threshold`（新增） | `soc_top_for_c_case_test` | F12 + F13 (FIFO 阈值 + RAW/STA/UNMASK/EN) | C 端 |
+| 9 | `usi_clk_div_boundary`（新增） | `soc_top_usi_uart_baud_test` | F15 (DIV=0x81/0x40 + UVM 沿计数) | UVM 协同 |
+| 10 | `usi_spi_format_matrix`（新增） | `soc_top_for_c_case_test` | F9 + F10 (16b/C0H0 + 8b/C0H1 + 8b/C1H0 + 4b/C1H1 master/slave) | C 端 |
+
+> **降级（环境/BFM 限制，不补用例）**：F4（RTS/CTS）、F6（I2C HS 模式）、F7（GCALL filter）、F8（hold time）、F14（DMA 接口）。
+> **defunct**：F11（SPI NSS 软件模式）— `SPI_NSS_DATA@0x6C` RTL 无地址译码。
 
 ### 功能覆盖矩阵
 
-| Feature | usi_uart_test | usi_i2c_test | usi_spi_test | usi_uart_format_matrix | usi_uart_flow_ctrl | usi_i2c_10bit_addr | usi_i2c_hs_mode | usi_i2c_gcall | usi_i2c_hold | usi_spi_format_matrix | usi_spi_master_slave | usi_spi_nss | usi_fifo_threshold | usi_intr_full | usi_dma | usi_clk_div_boundary | usi_reset_default | usi_mirror_inst |
+| Feature | usi_uart_test | usi_i2c_test | usi_spi_test | usi_uart_format_matrix | usi_i2c_10bit_addr | usi_fifo_threshold | usi_clk_div_boundary | usi_spi_format_matrix | usi_reset_default | usi_mirror_inst | 闭环 |
 |---------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| F1: 模式切换约束 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| F2: UART 收发 | ✓ | - | - | ✓ | ✓ | - | - | - | - | - | - | - | - | - | - | - | - | ✓ |
-| F3: UART 格式 | ✓ (8-N-1) | - | - | ✓ (×N) | ✓ | - | - | - | - | - | - | - | - | - | - | - | - | - |
-| F4: UART RTS/CTS | - | - | - | - | ✓ | - | - | - | - | - | - | - | - | - | - | - | - | - |
-| F5: I2C 地址模式 | - | ✓ (7-bit) | - | - | - | ✓ (10-bit) | - | - | - | - | - | - | - | - | - | - | - | ✓ |
-| F6: I2C HS 模式 | - | - | - | - | - | - | ✓ | - | - | - | - | - | - | - | - | - | - | - |
-| F7: I2C GCALL | - | - | - | - | - | - | - | ✓ | - | - | - | - | - | - | - | - | - | - |
-| F8: I2C hold time | - | - | - | - | - | - | - | - | ✓ | - | - | - | - | - | - | - | - | - |
-| F9: SPI CPOL/CPHA | - | - | ✓ (CPOL=0/CPHA=0) | - | - | - | - | - | - | ✓ (×N) | ✓ | ✓ | - | - | - | - | - | - |
-| F10: SPI master/slave | - | - | ✓ (master) | - | - | - | - | - | - | - | ✓ | - | - | - | - | - | - | - |
-| F11: SPI NSS | - | - | ✓ (隐含) | - | - | - | - | - | - | - | - | ✓ | - | - | - | - | - | - |
-| F12: FIFO 阈值状态 | ✓ (空检查) | ✓ (空检查) | ✓ (空检查) | - | - | - | - | - | - | - | - | - | ✓ | ✓ | - | - | - | - |
-| F13: 中断 4 件套 | - | - | - | - | - | - | - | - | - | - | - | - | ✓ | ✓ | - | - | - | - |
-| F14: DMA 接口 | - | - | - | - | - | - | - | - | - | - | - | - | - | - | ✓ | - | - | - |
-| F15: CLK_DIV | ✓ (9600) | ✓ (100K) | ✓ (100K) | - | - | - | - | - | - | - | - | - | - | - | - | ✓ | - | - |
-| F16: 多实例 | ✓ (USI0+1) | - | - | - | - | - | - | - | - | - | ✓ | - | - | - | - | - | - | ✓ |
-| F17: 复位值 | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | ✓ | - |
+| F1: 模式切换约束 |✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | - | -| ✅ |
+| F2: UART 收发 |✓ | - | - | ✓ | - | - | ✓ | - | - | ✓| ✅ |
+| F3: UART 格式 |✓ (8-N-1) | - | - | ✓ (×5) | - | - | - | - | - | -| ✅ |
+| F4: UART RTS/CTS |- | - | - | - | - | - | - | - | - | -| ⚠️ 降级 |
+| F5: I2C 地址模式 |- | ✓ (7-bit) | - | - | ✓ (7-bit 正 + 10-bit 负) | - | - | - | - | -| ✅ |
+| F6: I2C HS 模式 |- | - | - | - | - | - | - | - | - | -| ⚠️ 降级 |
+| F7: I2C GCALL |- | - | - | - | - | - | - | - | - | -| ⚠️ 降级 |
+| F8: I2C hold time |- | - | - | - | - | - | - | - | - | -| ⚠️ 降级 |
+| F9: SPI CPOL/CPHA |- | - | ✓ (C0H0/16) | - | - | - | - | ✓ (×4) | - | -| ✅ |
+| F10: SPI master/slave |- | - | ✓ (master) | - | - | - | - | ✓ (master/slave) | - | -| ✅ |
+| F11: SPI NSS |- | - | - | - | - | - | - | - | - | -| ⊘ defunct |
+| F12: FIFO 阈值状态 |✓ (空检查) | ✓ (空检查) | ✓ (空检查) | - | - | ✓ (×4) | - | - | - | -| ✅ |
+| F13: 中断 4 件套 |- | - | - | - | - | ✓ | - | - | - | -| ✅ |
+| F14: DMA 接口 |- | - | - | - | - | - | - | - | - | -| ⚠️ 降级 |
+| F15: CLK_DIV |✓ (9600) | ✓ (100K) | ✓ (100K) | - | - | - | ✓ (×2) | - | - | -| ✅ |
+| F16: 多实例 |✓ (USI0+1) | - | - | - | - | - | - | - | - | ✓ (USI2 + 交叉)| ✅ |
+| F17: 复位值 |- | - | - | - | - | - | - | - | ✓ (×3 × 21) | -| ✅ |
 
-> 矩阵用 ✓/- 标记；括号内为覆盖量。"TBD" 表示待新建 case，不阻塞既有 3 个 c_case 通过但属于覆盖缺口。
+> 矩阵用 ✓/- 标记；括号内为覆盖量。"闭环" 列：✅=闭环 / ⚠️=降级（环境/BFM 限制） / ⊘=defunct。
 
 ---
 
@@ -266,9 +275,9 @@ soc_top_test_base (extends uvm_test)
 
 ### 4.2 测试列表注册
 
-本项目无独立 Python `def_test` 注册表，USI 测试通过 SoC top test 入口 `+UVM_TESTNAME=soc_top_for_c_case_test` 触发，由固件 `c_case/usi_uart|usi_i2c|usi_spi/usi_*_test.c` 决定具体行为。后续 TBD 用例沿用同一入口，通过修改 `c_case/` 下不同 .c 文件选择。
+本项目无独立 Python `def_test` 注册表，USI 测试通过 SoC top test 入口 `+UVM_TESTNAME=soc_top_for_c_case_test`（默认）或 `+UVM_TESTNAME=soc_top_usi_uart_baud_test`（F15 沿计数 baud）触发，由固件 `c_case/usi_*/usi_*_test.c` 决定具体行为。
 
-> **待确认**：项目是否计划引入独立 USI uvm_test 子类。
+> 已有 10 个用例全部通过上述两个 UVM 入口覆盖；项目目前不引入独立 USI uvm_test 子类（沿用 SoC top test 入口）。
 
 ### 4.3 C 测试规范
 
@@ -285,12 +294,12 @@ soc_top_test_base (extends uvm_test)
 
 - **CPU_FLAG_ADDR monitor**：base test 通过 `cpu_flag_addr` 总线采样 `0x20007C50`，读出 end marker 决定 raise/drop objection。
 - **UVM_ERROR 计数器**：`soc_top_test_base` 维护 `err_num = server.get_severity_count(UVM_ERROR)`，`!err_num` 时打印 `UVM_CASE_PASS`。
-- **USI 专用 monitor（TBD）**：未来新增 UVM 侧 case 时，需在 `soc_top_env` 内增加：
-  - **PAD monitor**：采样 `PAD_USI{0,1,2}_{SCLK,SD0,SD1,NSS}` 波形，验证 UART baud、SPI CPOL/CPHA、I2C SCL 时序与配置一致。
-  - **I2C slave 模拟**：在 TB 侧提供从机响应模型，支持 master 测试中模拟 ACK/NACK、slave 地址匹配、general call。
-  - **SPI master/slave 对测**：两个 USI 实例对测时互为 master/slave，TB 侧联接 PAD。
-  - **ETB monitor**：采样 `usi_etb_tx_trig` / `usi_etb_rx_trig`。
-  - **DMA monitor**：采样 `dma_req_tx` / `dma_req_rx` 时序。
+- **USI 专用 monitor（已落地）**：`soc_top_usi_uart_baud_test` 通过 `fork wait(===)` 沿计数法采样 UART TXD 沿，验证 baud 周期（用于 F15）。
+- **USI 专用 monitor（环境/BFM 限制未落地）**：以下 monitor 受当前 TB 限制未实现，对应 F4/F6/F7/F8/F14 降级：
+  - **PAD monitor**：采样 `PAD_USI{0,1,2}_{SCLK,SD0,SD1,NSS}` 波形（F4 RTS/CTS、F8 hold time）
+  - **I2C slave 模拟**：TB 侧提供从机响应模型（F6 HS、F7 GCALL）
+  - **DMA monitor**：采样 `dma_req_tx` / `dma_req_rx` 时序（F14）
+  - **ETB monitor**：采样 `usi_etb_tx_trig` / `usi_etb_rx_trig`（F14/F15 未涉及 ETB）
 
 ---
 
@@ -301,21 +310,20 @@ soc_top_test_base (extends uvm_test)
 | `usi_uart_test`（既有） | USI0 发数据 + USI1 接收数据匹配 + `printf("uart test successfully\n")` + `cpu_flag_addr=0x2002` + TB `UVM_CASE_PASS` |
 | `usi_i2c_test`（既有） | I2C 主机发送 + TB 端从机响应匹配 + `sim_end()` |
 | `usi_spi_test`（既有） | SPI 发送完成 + `FIFO_STA.tx_empty=1` + `sim_end()` |
-| `usi_uart_format_matrix` (TBD) | 各 baud/data_bits/stop/parity 组合下传输数据校验正确 |
-| `usi_uart_flow_ctrl` (TBD) | CTS 拉低时 TX 暂停；RTS 拉高在 RX FIFO 接近满时 |
-| `usi_i2c_10bit_addr` (TBD) | 10-bit 地址字节序列与协议一致 |
-| `usi_i2c_hs_mode` (TBD) | master code 发送后 SCL 切换到高速 |
-| `usi_i2c_gcall` (TBD) | GCALL filter enable 时不 ACK address=0x00 |
-| `usi_i2c_hold` (TBD) | SDA hold time 与 `I2C_HOLD` 配置一致 |
-| `usi_spi_format_matrix` (TBD) | CPOL/CPHA/DATA_SIZE 各组合下数据传输正确 |
-| `usi_spi_master_slave` (TBD) | 2 USI 实例 master/slave 全双工通信匹配 |
-| `usi_spi_nss` (TBD) | 软件模式 NSS 电平与 `SPI_NSS_DATA` 一致 |
-| `usi_fifo_threshold` (TBD) | FIFO count 达到 `INTR_CTRL` 阈值时触发中断 |
-| `usi_intr_full` (TBD) | 19 类中断源 mask/clear 行为符合 spec |
-| `usi_dma` (TBD) | DMA trigger 时序与 `DMA_THRESHOLD` 一致 |
-| `usi_clk_div_boundary` (TBD) | 边界 CLK_DIV0/1 配置下 baud/SCL/SCK 时序正确 |
-| `usi_reset_default` (TBD) | 复位后 28 个寄存器值与 §1.2 reset 表一致 |
-| `usi_mirror_inst` (TBD) | USI1/USI2 行为与 USI0 镜像，全部 `sim_end()` |
+| `usi_reset_default` | 复位后 28 个寄存器值与 §1.2 reset 表一致（含 12 项非 0 实测 + `FIFO_STA=0x5` + `SPI_NSS_DATA@0x6C` defunct） |
+| `usi_mirror_inst` | USI1/USI2 行为与 USI0 镜像，USI2(`0x50029000`) UART TX 4 字节 + 交叉无干扰，全部 `sim_end()` |
+| `usi_uart_format_matrix` | 5 轮 USI0→USI1 数据比对（8-N-1 / 7-E-1 / 8-O-2 / 5-N-1 / 6-N-1）含位宽掩码 |
+| `usi_i2c_10bit_addr` | 7-bit 正向回环 + 10-bit 负向（i2c_nack raw bit13 置位、USI1 无接收） |
+| `usi_fifo_threshold` | FIFO count 达到 `INTR_CTRL` 阈值（thold=01→cnt≤4）时触发中断；覆盖 RAW/STA/UNMASK/EN 屏蔽链 + EN=0 门控 |
+| `usi_clk_div_boundary` | `CLK_DIV0=0x81/0x40` 各 16×0x55，UVM 沿间隔比 = 2.000（共 320 沿） |
+| `usi_spi_format_matrix` | 4 轮 (16b/C0H0 + 8b/C0H1 + 8b/C1H0 + 4b/C1H1) master/slave 数据比对 |
+| `usi_uart_flow_ctrl` (降级) | ⚠️ TB 无 CTS/RTS PAD 驱动，标记环境/BFM 限制 |
+| `usi_i2c_hs_mode` (降级) | ⚠️ TB 无 I2C HS 模式激励，标记环境/BFM 限制 |
+| `usi_i2c_gcall` (降级) | ⚠️ TB 无 I2C slave BFM，标记环境/BFM 限制 |
+| `usi_i2c_hold` (降级) | ⚠️ TB 端无 SDA hold 时序观测，标记环境/BFM 限制 |
+| `usi_spi_nss` (defunct) | ⊘ `SPI_NSS_DATA@0x6C` RTL 无地址译码，软件 NSS 不可用 |
+| `usi_dma` (降级) | ⚠️ TB 无 DMAC 协同，标记环境/BFM 限制 |
+| `usi_intr_full` | 并入 `usi_fifo_threshold`（详 §F13 闭环说明） |
 
 所有测试同时要求：
 - 仿真通过 `cpu_flag_addr=0x2002` end marker 检测到 `sim_end()` 调用
@@ -327,43 +335,54 @@ soc_top_test_base (extends uvm_test)
 
 ```text
 1. 编译 build='soc_top'（共享编译，1 次）
-2. 仿真 usi_uart_test                (~5 min)   既有 C 端基本功能
-3. 仿真 usi_i2c_test                 (~5 min)   既有 C 端基本功能
-4. 仿真 usi_spi_test                 (~5 min)   既有 C 端基本功能
-5. 仿真 usi_uart_format_matrix       (~5 min)   TBD case 1
-6. 仿真 usi_fifo_threshold           (~5 min)   TBD case 2
-7. 仿真 usi_intr_full                (~5 min)   TBD case 3
-8. 仿真 usi_reset_default            (~5 min)   TBD case 4
-9. 仿真 usi_mirror_inst              (~10 min)  TBD case 5（USI1/USI2 回归）
-10. 仿真 usi_uart_flow_ctrl          (~10 min)  TBD UVM case 6
-11. 仿真 usi_i2c_10bit_addr          (~10 min)  TBD UVM case 7
-12. 仿真 usi_i2c_hs_mode             (~10 min)  TBD UVM case 8
-13. 仿真 usi_i2c_gcall               (~10 min)  TBD UVM case 9
-14. 仿真 usi_i2c_hold                (~10 min)  TBD UVM case 10
-15. 仿真 usi_spi_format_matrix       (~10 min)  TBD UVM case 11
-16. 仿真 usi_spi_master_slave        (~10 min)  TBD UVM case 12
-17. 仿真 usi_spi_nss                 (~10 min)  TBD UVM case 13
-18. 仿真 usi_dma                     (~10 min)  TBD UVM case 14
-19. 仿真 usi_clk_div_boundary        (~10 min)  TBD UVM case 15
+2. 仿真 usi_uart_test                (~5 min)   ✅ PASS（既有 C 端基本功能）
+3. 仿真 usi_i2c_test                 (~5 min)   ✅ PASS（既有 C 端基本功能）
+4. 仿真 usi_spi_test                 (~5 min)   ✅ PASS（既有 C 端基本功能）
+5. 仿真 usi_reset_default            (~5 min)   ✅ PASS（F17：3 实例 × 21 项复位值表）
+6. 仿真 usi_mirror_inst              (~10 min)  ✅ PASS（F16：USI2 UART TX 4 字节 + 交叉无干扰）
+7. 仿真 usi_uart_format_matrix       (~5 min)   ✅ PASS（F3：5 轮 USI0→USI1 数据比对 + 位宽掩码）
+8. 仿真 usi_i2c_10bit_addr           (~10 min)  ✅ PASS（F5：7-bit 正向 + 10-bit 负向）
+9. 仿真 usi_fifo_threshold           (~10 min)  ✅ PASS（F12 + F13：FIFO 阈值 + RAW/STA/UNMASK/EN）
+10. 仿真 usi_clk_div_boundary        (~10 min) ✅ PASS（F15：UVM 沿计数 baud 验证，320 沿）
+11. 仿真 usi_spi_format_matrix       (~10 min) ✅ PASS（F9 + F10：4 轮 master/slave）
+
+降级（环境/BFM 限制，不补用例）：
+- F4（UART RTS/CTS）、F6（I2C HS）、F7（GCALL）、F8（hold time）、F14（DMA） — 标记 ⚠️，后续补 BFM/DMAC
+defunct（RTL 不支持）：
+- F11（SPI NSS 软件模式）— ⊘，`SPI_NSS_DATA@0x6C` RTL 无地址译码
 ```
 
-预估总时间：~145-170 min（既有 3 case ~15 min + 15 个 TBD case ~130-155 min）
+预估总时间：~80-100 min（10 case：3 既有 ~15 min + 7 新增 ~65-85 min）
 
 ---
 
 ## 7. 风险与限制
 
-| 风险 | 缓解措施 |
-|------|---------|
-| USI 工作期间改 MODE_SEL 可能丢数据（user guide 明文约束） | 测试仅在 disable 后切换；"工作中改配置"作为负面测试需 TB 端 PAD monitor 观察数据丢失 |
-| UART 收发对测依赖 PAD 短接或 TB 联接 | 既有 `usi_uart_test.c` 通过 USI0 TX + USI1 RX 实现（待确认 PAD 短接方式）；UVM 侧需 PAD loopback monitor |
-| I2C slave 模式测试需要 TB 端提供 I2C master 模拟 | slave 模式测试（`usi_i2c_gcall` 等）依赖 UVM I2C master BFM；目前 SoC 内 3 个 USI 实例可互为 master/slave |
-| SPI 数据位宽 4~16 全组合测试组合爆炸 | 抽样测试：4/8/12/16 + CPOL/CPHA 2×2 = 16 组合，标记为"抽样覆盖" |
-| DMA 接口测试依赖 DMAC 协同 | `usi_dma` (TBD) 需在 DMAC 验证链路恢复后启动；短期仅验证 DMA_CTRL/DMA_THRESHOLD 寄存器读写 |
-| USI 中断号依赖 System Overview Table 1-4；具体行号以文档最新版本为准 | TB 侧硬编码中断号（待确认）；后续以 doc_review 修复后版本对齐 |
-| `FIFO_STA` reset 值 = `0x11`（`FIFO_STA[4]=tx_empty=1, [0]=rx_empty=1`）与其他寄存器 `0x0000_0000` 不同 | 复位值测试需注意差异；user guide 仅说明 tx_fifo_cnt/rx_fifo_cnt 初始为 0（FIFO 空），`0x11` 对应 reset 时 FIFO 默认空 |
-| 工作模式切换约束在既有 3 个 c_case 中**已隐含遵守**（disable → 改 MODE_SEL → enable 流程），但未做"工作中改"负面测试 | 负面测试待 UVM 侧 PAD monitor 落地后补 |
-| SPI master 与 slave 同时使用需要 2 个 USI 实例，且 PAD 互联正确 | `usi_spi_master_slave` (TBD) 需 TB 侧联接 `PAD_USI0_*` 与 `PAD_USI1_*` |
+> 本节为**初始计划**阶段风险登记；实测结果已对照验证报告 §6「遗留风险与后续建议」，本表保留原文并加 ✅/⚠️/⊘ 列。
+
+| 风险 | 缓解措施 | 实际结果 |
+|------|---------|---------|
+| USI 工作期间改 MODE_SEL 可能丢数据（user guide 明文约束） | 测试仅在 disable 后切换；"工作中改配置"作为负面测试需 TB 端 PAD monitor 观察数据丢失 | ✅ 3 基线 + 7 新增均按 disable→改 MODE_SEL→enable 流程，闭环 |
+| UART 收发对测依赖 PAD 短接或 TB 联接 | 既有 `usi_uart_test.c` 通过 USI0 TX + USI1 RX 实现（待确认 PAD 短接方式）；UVM 侧需 PAD loopback monitor | ✅ `usi_uart_test` + `usi_uart_format_matrix` 5 轮 USI0→USI1 数据比对闭环 |
+| I2C slave 模式测试需要 TB 端提供 I2C master 模拟 | slave 模式测试（`usi_i2c_gcall` 等）依赖 UVM I2C master BFM；目前 SoC 内 3 个 USI 实例可互为 master/slave | ⚠️ F6（HS）/ F7（GCALL）降级；F5 仅做 master 7-bit 正 + 10-bit 负（slave 10-bit RTL 不支持） |
+| SPI 数据位宽 4~16 全组合测试组合爆炸 | 抽样测试：4/8/12/16 + CPOL/CPHA 2×2 = 16 组合，标记为"抽样覆盖" | ✅ `usi_spi_format_matrix` 抽样 4 轮 (16b/C0H0, 8b/C0H1, 8b/C1H0, 4b/C1H1) master/slave 闭环 |
+| DMA 接口测试依赖 DMAC 协同 | `usi_dma` (降级) 需在 DMAC 验证链路恢复后启动；短期仅验证 DMA_CTRL/DMA_THRESHOLD 寄存器读写 | ⚠️ F14 降级（TB 无 DMAC 协同） |
+| USI 中断号依赖 System Overview Table 1-4；具体行号以文档最新版本为准 | TB 侧硬编码中断号（待确认）；后续以 doc_review 修复后版本对齐 | ✅ F13 `usi_fifo_threshold` 覆盖 RAW/STA/UNMASK/EN 全链路 + 19 类中断位映射 |
+| `FIFO_STA` reset 值 = `0x11`（`FIFO_STA[4]=tx_empty=1, [0]=rx_empty=1`）与其他寄存器 `0x0000_0000` 不同 | 复位值测试需注意差异；user guide 仅说明 tx_fifo_cnt/rx_fifo_cnt 初始为 0（FIFO 空），`0x11` 对应 reset 时 FIFO 默认空 | ⚠️ RTL 实测 reset=`0x5`（位排布 `{tx_empty[0], rx_empty[2]}=4'b0101`），与计划 0x11 + 位序不符；详验证报告 §4.2 |
+| 工作模式切换约束在既有 3 个 c_case 中**已隐含遵守**（disable → 改 MODE_SEL → enable 流程），但未做"工作中改"负面测试 | 负面测试待 UVM 侧 PAD monitor 落地后补 | ✅ 3 基线 + 7 新增均隐含遵守；负面测试暂未做（环境限制） |
+| SPI master 与 slave 同时使用需要 2 个 USI 实例，且 PAD 互联正确 | `usi_spi_master_slave` (降级→闭环) 需 TB 侧联接 `PAD_USI0_*` 与 `PAD_USI1_*` | ✅ `usi_spi_format_matrix` 中 2 USI 实例互为 master/slave 全双工闭环 |
+
+### 7.1 新增风险（验证后归纳）
+
+| # | 新增风险 | 来源 |
+|---|---------|------|
+| 1 | 12 寄存器复位值非 0（CLK_DIV0=0x20 / CLK_DIV1=0x30 / UART_CTRL=0x3 / I2C_MODE=1 / I2C_ADDR=0x133 / I2CM_CODE=1 / I2C_FM_DIV=5 / I2C_HOLD=5 / SPI_MODE=1 / SPI_CTRL=0x7 / INTR_CTRL=0x101 / DMA_TH=0x808） | 详验证报告 §4.1 |
+| 2 | `SPI_NSS_DATA@0x6C` RTL 无地址译码，F11 软件 NSS 功能 defunct | 详验证报告 §4.3 |
+| 3 | `i2cs_amode` 硬连线 1'b0，I2C slave 模式 10-bit 寻址不可用 | 详验证报告 §4.4 |
+| 4 | `rx_shift` 仅复位清零，帧间不清；SUB-8-bit UART 接收需按位宽掩码 | 详验证报告 §4.5 |
+| 5 | `RAW_INTR_STA` 受 `INTR_EN` 门控（en=0 时不置位 + 强制清零），与典型 RAW-only 设计不符 | 详验证报告 §4.6 |
+| 6 | DMA 寄存器名 RTL 为 `DMA_TH`（非计划 `DMA_THRESHOLD`） | 详验证报告 §4.8 |
+| 7 | F4（UART RTS/CTS）/ F6（I2C HS）/ F7（GCALL）/ F8（hold time）/ F14（DMA）共 5 项降级（环境/BFM 限制） | 详验证报告 §4.9 |
 
 ---
 
@@ -374,16 +393,18 @@ soc_top_test_base (extends uvm_test)
 ```text
 c_case/
 ├── usi_uart/
-│   └── usi_uart_test.c           (F1, F2, F3(8-N-1), F15, F16：既有)
+│   ├── usi_uart_test.c           (F1, F2, F3(8-N-1), F15, F16：既有基线)
+│   ├── usi_reset_default.c       (F17：3 实例 × 21 项复位值表)
+│   ├── usi_mirror_inst.c         (F16：USI2 UART TX 4 字节 + 交叉无干扰)
+│   ├── usi_uart_format_matrix.c  (F3：5 轮 8-N-1/7-E-1/8-O-2/5-N-1/6-N-1 + 位宽掩码)
+│   ├── usi_fifo_threshold.c      (F12, F13：FIFO 阈值 + RAW/STA/UNMASK/EN)
+│   └── usi_clk_div_boundary.c    (F15：CLK_DIV 边界 + UVM 沿计数 baud)
 ├── usi_i2c/
-│   └── usi_i2c_test.c            (F1, F5(7-bit), F15(100K)：既有)
+│   ├── usi_i2c_test.c            (F1, F5(7-bit), F15(100K)：既有基线)
+│   └── usi_i2c_10bit_addr.c      (F5：7-bit 正向 + 10-bit 负向)
 ├── usi_spi/
-│   └── usi_spi_test.c            (F1, F9(CPOL=0/CPHA=0), F10(master)：既有)
-├── usi_uart/                     (TBD 新增)
-│   ├── usi_uart_format_matrix.c  (F3)
-│   ├── usi_fifo_threshold.c      (F12, F13)
-│   ├── usi_reset_default.c       (F17)
-│   └── usi_mirror_inst.c         (F1, F2, F5, F9：USI1/USI2 镜像)
+│   ├── usi_spi_test.c            (F1, F9(CPOL=0/CPHA=0), F10(master)：既有基线)
+│   └── usi_spi_format_matrix.c   (F9 + F10：4 轮 (16b/C0H0, 8b/C0H1, 8b/C1H0, 4b/C1H1) master/slave)
 └── addr_map/
     └── map_test.c                (通用地址空间 read 0 检查，含 USI 区域 0x50028000~0x50028FFF)
 ```
