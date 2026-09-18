@@ -21,5 +21,6 @@
   `include "soc_top_timer_dfx_test.svh"
 `include "soc_top_wdt_dfx_test.svh"
 `include "soc_top_gpio_dfx_test.svh"
+`include "soc_top_rtc_dfx_test.svh"
 
 `endif
