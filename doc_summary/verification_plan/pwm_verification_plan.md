@@ -132,86 +132,96 @@
 
 ### F1: PWMCFG 全局使能与分频
 **目标**：`PWMCFG[27] cntdiven` + `[26:24] cntdiv` 决定 PWM clock 分频；`[11:0] pwm0en~pwm11en` 控制 12 路输出使能；`[23:18] tim0en~tim5en` + `[17:12] cap0en~cap5en` 控制 timer/capture 子功能。
-**已有 case**：`pwm_test.c`（既有）配置 `PWMCFG=0x9002001`（bit[27]=cntdiven + bit[24]=cntdiv[0] = 1 → 分频 /4；bit[0]=ch0 enable；bit[17]=cap2 enable）。
-**检查**：C 端配置不同 `cntdiv` 编码（/2/4/8 等），验证 PWM 输出周期与分频一致；TB 端 PAD monitor 采样 `o_pwm0` 波形验证占空比与 LOAD/CMP 关系。
+**已有 case**：`pwm_test.c`（既有，PASS）配置 `PWMCFG=0x9002001`（cntdiv/4 + ch0 enable + cap2 enable）；`pwm_en_all`（2026-09-17 新增，PASS）显式覆盖 PWMCFG 使能位写读回环；`pwm_output_duty`（2026-09-17 新增，PASS，`soc_top_pwm_output_duty_test`）验证 `cntdiv=0` 周期 = 不分频时的 2 倍（详见 UG 差异注）；`pwm_multi_group`（PASS，`soc_top_pwm_multi_group_test`）跨 group 兼带。
+**检查**：C 端配置不同 `cntdiv` 编码，验证 PWM 输出周期与分频一致；TB 端 PAD monitor 采样 `o_pwm0` 波形验证占空比与 LOAD/CMP 关系。
+**闭环状态**：✅ F1 已闭环（`pwm_test` + `pwm_en_all` + `pwm_output_duty` + `pwm_multi_group`）。
+**UG 差异注**：`cntdiv=0` 实际为 2 分频（`pwm.v:4154` `clkspec[6:0] = 7'h1`），而非《不分频》；与 UG 字段表描述不一致。验证用例按 RTL 实证 `(LOAD+1) × 2 × ext_clk_period` 计算周期。
 
 ### F2: 极性反转（PWMINVERTTRIG）
 **目标**：`PWMINVERTTRIG[11:0] pwm0inv~pwm11inv` 各 bit 控制对应 PWM 通道输出极性反转。
-**已有 case**：无（既有 c_case 未覆盖）。
+**已有 case**：`pwm_polarity_invert`（2026-09-17 新增，PASS，`soc_top_pwm_polarity_invert_test`）验证反转前后 75% ↔ 25% 互补；`pwm_multi_group`（PASS）跨 group 兼带。
 **检查**：TB 端 PAD monitor 采样 `o_pwm0` 在 `PWMINVERTTRIG[0]=1` 前后波形翻转（高电平变低电平）。
-**缺口**：**待新建 case（标记 TBD）**。
+**闭环状态**：✅ F2 已闭环（`pwm_polarity_invert` + `pwm_multi_group`）。
 
 ### F3: ADC trigger（PWM01/23/45TRIG）
 **目标**：`PWM{01,23,45}TRIG[31:16] triggerm` + `[15:0] triggern` 配置每 group 的 ADC trigger 比较值；counter 匹配时输出 ETB 触发。
-**已有 case**：无（既有 c_case 未覆盖 ADC trigger）。
+**已有 case**：`pwm_trig_etb`（2026-09-17 新增，PASS，`soc_top_pwm_trig_etb_test`）验证 `pwm_xx_trig` 脉冲与 TRIG 配置时序对齐；`pwm_multi_group`（PASS）跨 group 兼带。
 **检查**：TB 端 ETB monitor 采样 `pwm_xx_trig` / `pwm_timN_etb_trig` 验证触发时序与 TRIG 配置一致。
-**缺口**：**待新建 case（标记 TBD）**，需 UVM 侧 ETB 监测。
+**闭环状态**：✅ F3 已闭环（`pwm_trig_etb` + `pwm_multi_group`）。
 
 ### F4: 计数模式（PWMCTL 的 up / up-down / sync mode）
 **目标**：`PWMCTL[5:0] pwm0mode~pwm5mode` = 0 (up) / 1 (up-down)；`[17:6] Sync0mode~Sync5mode` 控制寄存器更新时机。
-**已有 case**：无（既有 c_case 写 `PWMCFG=0x9002001` 但未配 PWMCTL）。
-**检查**：TB 端 PAD monitor 采样 `o_pwm0` 波形验证 up 模式 vs up-down 模式锯齿/三角波形差异；sync mode 验证寄存器更新时机。
-**缺口**：**待新建 case（标记 TBD）**。
+**已有 case**：`pwm_output_duty`（2026-09-17 新增，PASS）覆盖 up 模式锯齿；`pwm_count_mode`（2026-09-17 新增，PASS，`soc_top_pwm_count_mode_test`）覆盖 up vs up-down 周期比 ≈ 2；`pwm_multi_group`（PASS）跨 group 兼带。
+**检查**：TB 端 PAD monitor 采样 `o_pwm0` 波形验证 up 模式 vs up-down 模式锯齿/三角波形差异。
+**闭环状态**：✅ F4 已闭环（`pwm_output_duty` + `pwm_count_mode` + `pwm_multi_group`）。
+**注**：Sync mode（`Sync0mode~Sync5mode`）寄存器更新时机未单独覆盖，建议后续补充 `pwm_sync_mode` 用例。
 
 ### F5: LOAD / COUNT / CMP（周期 / 占空比）
 **目标**：`PWMnLOAD` 决定周期；`PWMnCMP[15:0] compna` + `[31:16] compnb` 决定两通道占空比；`PWMnCOUNT` 反映当前值。
-**已有 case**：`pwm_test.c`（既有）写 `PWM01LOAD=2`、`PWM0CMP=2`（最小占空比），但仅为 CAP 测试驱动，不是测 PWM 输出本身。
-**检查**：C 端配置 LOAD=800、`PWM0CMP[15:0]=200`（25% 占空比），TB 端 PAD monitor 验证 `o_pwm0` 周期 800 ticks + 高电平 200 ticks。
-**缺口**：**待新建 case（标记 TBD）**。
+**已有 case**：`pwm_test.c`（既有，PASS，LOAD=2 最小占空比，作为 CAP 测试驱动）；`pwm_cmp_read`（2026-09-17 新增，PASS）覆盖 PWM0/1CMP 写读回环；`pwm_output_duty`（PASS，`soc_top_pwm_output_duty_test`）实测 LOAD=799 + CMPA=200 → 占空比 75%；`pwm_multi_group`（PASS）跨 group 兼带。
+**检查**：C 端配置 LOAD=799、`PWM0CMP[15:0]=200`，TB 端 PAD monitor 验证 `o_pwm0` 占空比 75%。
+**闭环状态**：✅ F5 已闭环（`pwm_test` + `pwm_cmp_read` + `pwm_output_duty` + `pwm_multi_group`）。
 
 ### F6: 死区控制（DB）
 **目标**：`PWM{01,23,45}DB[25] dbmen` + `[24] dbnen` 控制是否插入死区；`[23:12] delaym` + `[11:0] delayn` 决定延迟 ticks。
-**已有 case**：无（既有 c_case 未配 DB）。
+**已有 case**：`pwm_deadband`（2026-09-17 新增，PASS，`soc_top_pwm_deadband_test`）验证 CH0/CH1 互补 + 无重叠（delay=0x10）；`pwm_multi_group`（PASS）跨 group 兼带。
 **检查**：TB 端 PAD monitor 采样 `o_pwm0`/`o_pwm1` 互补输出 + 死区延迟，验证延迟 ticks 与 DB 配置一致。
-**缺口**：**待新建 case（标记 TBD）**。
+**闭环状态**：✅ F6 已闭环（`pwm_deadband` + `pwm_multi_group`）。
 
 ### F7: 捕获功能（CAPCTL/CAPINTEN/CAPRIS/CAPIC/CAPIS/CAPT/CAPMATCH）
 **目标**：`CAPCTL` 配置 6 路捕获通道的边沿事件 + edge count/time 模式；`CAPINTEN`/`CAPRIS`/`CAPIC`/`CAPIS` 中断 4 件套；`CAP*`T 读捕获值；`CAP*MATCH` 配置匹配值。
-**已有 case**：`pwm_test.c`（既有）写 `CAPCTL=0x302`（cap2 enable + edge count）、`CAPINTEN=0x2`（cap2 cnt 中断使能）、`CAP01MATCH=0x200000`，轮询 `CAPRIS == 0x2`。
+**已有 case**：`pwm_test.c`（既有，PASS）写 `CAPCTL=0x302`（cap2 enable + edge count）+ `CAP01MATCH=0x200000` + 轮询 `CAPRIS==0x2`；`pwm_cap_full`（2026-09-17 新增，PASS）完整覆盖 cnt_match 置位/清除、沿计数递增、时间戳两次捕获、rise vs both 边沿选择；`pwm_multi_group`（PASS）跨 group 兼带。
 **检查**：C 端捕获中断产生 → 读 `CAPRIS` → 写 `CAPIC` 清中断 → 再读 `CAPRIS==0`；edge count mode 下 `CNT*VAL` 反映捕获脉冲数。
-**缺口**：edge time 模式、CAP0/1/3/4/5 通道、4 种边沿事件（posedge/negedge/reserved/both）**待新建 case（标记 TBD）**。
+**闭环状态**：✅ F7 已闭环（`pwm_test` + `pwm_cap_full` + `pwm_multi_group`）。
+**UG 差异注**：`capNmode` 语义与命名相反——`cap_mode=1` 表示沿计数（`pwm_cnt` 每个捕获沿 +1，达到 `cap_load` 回绕）；`cap_mode=0` 表示时间戳（`pwm_cnt` 每 clk 自由累加），详见 `pwm.v:5030-5038`。UG 字段名 `capNmode` 建议改为 `capNmode_edge_count` / `capNmode_timestamp`。
+**注**：捕获通道映射 `capN ← PAD_PWM_CH(2N)`（cap1 ← CH2，`pwm.v:4422` `i_capture_2`），`wujian100_open_top.v:1413` `PAD_DIG_IO x_PAD_PWM_CH2` 确认接入。
 
 ### F8: 定时器功能（TIM_INT_EN/TIMRIS/TIM_INT_CLR/TIMIS/TIM_LOAD/TIM_COUNT/CNT_VAL）
 **目标**：`TIM_INT_EN[5:0]` 中断使能；`TIMRIS/TIMIS` 状态；`TIM_INT_CLR` 写清；`TIM*LOAD/TIM*COUNT` 16-bit load/count；`CNT*VAL` 捕获脉冲计数。
-**已有 case**：无（既有 c_case 未用 TIM）。
+**已有 case**：`pwm_tim_full`（2026-09-17 新增，PASS）覆盖 tim0/1/2/5 TIMRIS/TIMIS/TIM_INT_CLR + INTEN 门控全链路；`pwm_multi_group`（PASS）跨 group 兼带。
 **检查**：C 端配置 `TIM01LOAD=0x800`（800 ticks）→ 启动 → 等中断 → 读 `TIMRIS` → 写 `TIM_INT_CLR` 清。
-**缺口**：**待新建 case（标记 TBD）**。
+**闭环状态**：✅ F8 已闭环（`pwm_tim_full` + `pwm_multi_group`）。
 
 ### F9: PWM 中断体系（INTEN/RIS/IC/IS 分组）
 **目标**：8 个中断寄存器（`PWMINTEN1/2`/`PWMRIS1/2`/`PWMIC1/2`/`PWMIS1/2`），覆盖 6 个 group 的计数器事件 + ADC trigger + CMP 匹配等。
-**已有 case**：`pwm_test.c`（既有）轮询 `CAPRIS == 0x2`（CAP 中断，非 PWM 中断寄存器）。
+**已有 case**：`pwm_intr_full`（2026-09-17 新增，PASS）覆盖 group0 zero/load/compa_up/compb_up + PWMIC + INTEN 门控 + group3（PWMRIS2）；`pwm_multi_group`（PASS）跨 group 兼带。
 **检查**：C 端触发 PWM 计数器事件 → 检查 `PWMRIS1/PWMRIS2` 置位 → 写 `PWMIC1/PWMIC2` 清 → 再读为 0。
-**缺口**：**待新建 case（标记 TBD）**。
+**闭环状态**：✅ F9 已闭环（`pwm_intr_full` + `pwm_multi_group`）。
+**UG 差异注 1（位序）**：`PWMRIS1` group0 位序为 `[8]cnt_zero [9]cnt_load [10]compa_up [11]compb_up [12]compa_down [13]compb_down`（`pwm.v:4752`），compb_up 在 bit11（非 UG 常见排列）。
+**UG 差异注 2（PWMIS 别名）**：`PWMIS == PWMRIS` 直接 assign（`pwm.v:4757-4758`），masked 状态与 raw 无差异；典型设计中 IS 应为 masked 状态。建议：(a) UG 明确 IS == RIS 别名；(b) 若需 masked 状态 RTL 补 `assign pwmis = pwmris & pwmen`。
+**UG 差异注 3（RIS 门控 INTEN）**：RIS 被 INTEN 门控（`pwm.v:5298` 等：`event_flag && int_en` 才置位 raw pending），INTEN=0 时 RIS 恒 0；RIS 不再是《未屏蔽原始中断状态》，而是《已使能通道的原始中断状态》。
 
 ### F10: PWM_FAULT 输入
 **目标**：`fault`（1 bit 异步故障输入）触发后 PWM 输出立即关闭（具体行为待 RTL 确认）。
-**已有 case**：无。
-**检查**：TB 侧 force `fault=1`，验证 `o_pwm*` 立即拉低；fault 撤销后恢复（依赖 RTL 设计）。
-**缺口**：**待新建 case（标记 TBD）**。
+**已有 case**：`pwm_fault`（2026-09-17 新增，PASS，`soc_top_pwm_fault_test`）UVM force `PAD_PWM_FAULT` 触发 fault 中断置位/清除；`pwm_multi_group`（PASS）跨 group 兼带。
+**检查**：TB 侧 force `fault=1`，验证 fault 中断置位；fault 撤销后恢复（依赖 RTL 设计）。
+**闭环状态**：✅ F10 已闭环（`pwm_fault` + `pwm_multi_group`）。
+**注**：fault 中断为电平型（`int_fault` 在 `fault & intenfault` 期间每拍置位）；清除前必须先关 INTEN（写 `PWMINTEN1[0]=0`），否则立刻重触发。`PAD_PWM_FAULT` 悬空为 X，`pwm_fault` 用例由 UVM 在 `t=0` 起 force 0 消 X；其他用例一律不使能 `INTEN1[0]`。
 
 ### F11: ETB 触发（输入 + 输出）
 **目标**：6 路输入 `etb_pwm_trig_tim0~5_on/off` 控制 PWM 计数器自动 reload；6+1 路输出 `pwm_tim0~5_etb_trig`/`pwm_xx_trig` 送 ETB。
-**已有 case**：无（既有 c_case 未涉及 ETB）。
-**检查**：TB 端 ETB agent 驱动 `etb_pwm_trig_tim0_on` 后 PWM counter 自动重载；monitor 采样输出 `pwm_tim0_etb_trig` 时序。
-**缺口**：**待新建 case（标记 TBD）**，需 UVM 侧 ETB agent。
+**已有 case**：`pwm_trig_etb`（2026-09-17 新增，PASS，`soc_top_pwm_trig_etb_test`）验证 `pwm_xx_trig` 脉冲（F3）与 `pwm_tim0_etb_trig` 脉冲（F11 输出侧）；`pwm_multi_group`（PASS）跨 group 兼带。
+**检查**：TB 端 monitor 采样输出 `pwm_tim0_etb_trig` 时序（输出侧已闭环）。
+**闭环状态**：⚠️ F11 **部分覆盖**——输出侧闭环；**输入侧 `etb_pwm_trig_tim*_on/off` 在 `apb0_sub_top.v:845-849` tie-0 不可激励**（环境限制，非 RTL 缺陷；同 RTC `etb_rtc_trig`，详见 RTC 验证报告 §4.4）。建议后续 ETB fabric 集成时补充联调。
 
 ### F12: 寄存器复位值
 **目标**：复位后 53 个寄存器全部回到 `0x0`。
-**已有 case**：无（既有 c_case 未做复位后初始状态校验）。
+**已有 case**：`pwm_reset_default`（2026-09-17 新增，PASS）覆盖 53 寄存器复位值（全 0）。
 **检查**：`presetn` 释放后立即读 53 个寄存器，校验 reset 值。
-**缺口**：**待新建 case（标记 TBD）**。
+**闭环状态**：✅ F12 已闭环（`pwm_reset_default`）。
+**注**：UG 字段表中部分 reset 默认 `0x1`，与 RTL 实证全 0 可能存在差异；后续建议 UG 与 RTL 复位清单同步校对。
 
 ### F13: 多 group 独立性
 **目标**：6 个 group 的 PWM 输出 / counter / 捕获 / 定时器完全独立，可并行使能不同模式。
-**已有 case**：无（既有 c_case 仅 group0/2）。
+**已有 case**：`pwm_output_duty`（2026-09-17 新增，PASS）覆盖 group0/group1（×2 group）；`pwm_multi_group`（2026-09-17 新增，PASS，`soc_top_pwm_multi_group_test`）覆盖 group0（LOAD=0x100）vs group3（LOAD=0x400）周期比 ≈ 4。
 **检查**：C 端同时使能 group0/1/2/3，验证各 group 输出波形独立、互不干扰。
-**缺口**：**待新建 case（标记 TBD）**。
+**闭环状态**：✅ F13 已闭环（`pwm_output_duty` + `pwm_multi_group`）。
 
 ### F14: 中断号路由（VIC 中断号 25）
 **目标**：`pwmint` 经 SoC VIC 路由到 `cpu_intr[25]` = `PWM`。
-**已有 case**：无（C 端无法直接验证中断号，需 UVM 端 VIC monitor）。
-**检查**：UVM 侧打开 `pwmint` monitor，验证 `cpu_intr[25]` 上升沿匹配。
-**缺口**：**待新建 case（标记 TBD）**，依赖 SoC VIC monitor。
+**已有 case**：`pwm_vic_route`（2026-09-17 新增，PASS，`soc_top_pwm_vic_route_test`）UVM 监控 `pad_vic_int_vld[25]` 断言 + 解除（`core_top.v:545` `ip_cpu_int_vld[25] = pwm_wic_intr`）。
+**检查**：UVM 侧监控 `pad_vic_int_vld[25]` 上升沿与中断事件对齐。
+**闭环状态**：✅ F14 已闭环（`pwm_vic_route` + `soc_top_pwm_vic_route_test`）。
 
 ---
 
@@ -219,41 +229,41 @@
 
 | # | Test name | Build | 覆盖功能点 | 类型 |
 |---|-----------|-------|-----------|------|
-| 1 | `pwm_test`（既有 `c_case/pwm/pwm_test.c`） | `soc_top_for_c_case_test` | F1 (cntdiv + ch0/cap2 enable), F7 (CAPRIS 轮询) | C 端基础 |
-| 2 | `pwm_output_duty`（TBD） | `soc_top_for_c_case_test` + TB PAD monitor | F1 (cntdiv 全档), F5 (LOAD/CMP 周期占空比) | C 端 + TB 波形 |
-| 3 | `pwm_polarity_invert`（TBD） | UVM 侧 | F2 | UVM PAD monitor |
-| 4 | `pwm_adc_trig`（TBD） | UVM 侧 | F3 | UVM ETB 监测 |
-| 5 | `pwm_count_mode`（TBD） | UVM 侧 | F4 (up/up-down) | UVM PAD monitor |
-| 6 | `pwm_deadband`（TBD） | UVM 侧 | F6 | UVM PAD monitor |
-| 7 | `pwm_cap_full`（TBD） | `soc_top_for_c_case_test` + TB | F7 (6 通道 + 4 边沿事件 + edge count/time) | C 端 |
-| 8 | `pwm_tim_full`（TBD） | `soc_top_for_c_case_test` | F8 (6 个 TIM + 中断 4 件套) | C 端 |
-| 9 | `pwm_intr_full`（TBD） | `soc_top_for_c_case_test` | F9 (PWM 中断 4 件套 ×8 寄存器) | C 端 |
-| 10 | `pwm_fault`（TBD） | UVM 侧 | F10 | UVM fault 注入 |
-| 11 | `pwm_etb`（TBD） | UVM 侧 | F11 | UVM ETB agent |
-| 12 | `pwm_reset_default`（TBD） | `soc_top_for_c_case_test` | F12 | C 端复位检查 |
-| 13 | `pwm_multi_group`（TBD） | UVM 侧 | F13 | UVM 并行验证 |
-| 14 | `pwm_vic_route`（TBD） | UVM 侧 | F14 | UVM VIC monitor |
+| 1 | `pwm_test`（既有 `c_case/pwm/pwm_test.c`，PASS） | `soc_top_for_c_case_test` | F1 (cntdiv + ch0/cap2 enable), F7 (CAPRIS 轮询) | C 端基础 |
+| 2 | `pwm_reset_default`（`c_case/pwm/pwm_reset_default.c`，PASS） | 默认 | F12 (×53 全 0) | C 端复位检查 |
+| 3 | `pwm_en_all`（`c_case/pwm/pwm_en_all.c`，PASS） | 默认 | F1 (PWMCFG 使能位写读) | C 端 |
+| 4 | `pwm_cmp_read`（`c_case/pwm/pwm_cmp_read.c`，PASS） | 默认 | F5 (PWM0/1CMP 写读回环) | C 端 |
+| 5 | `pwm_tim_full`（`c_case/pwm/pwm_tim_full.c`，PASS） | 默认 | F8 (tim0/1/2/5 TIMRIS/TIMIS/TIM_INT_CLR + INTEN 门控) | C 端 |
+| 6 | `pwm_intr_full`（`c_case/pwm/pwm_intr_full.c`，PASS） | 默认 | F9 (group0 + group3 + INTEN 门控) | C 端 |
+| 7 | `pwm_cap_full`（`c_case/pwm/pwm_cap_full.c`，PASS） | 默认 | F7 (6 通道 + 4 边沿 + edge count/time) | C 端 |
+| 8 | `pwm_output_duty`（`c_case/pwm/pwm_output_duty.c`，PASS） | `soc_top_pwm_output_duty_test` | F5 (LOAD=799, CMPA=200, 75%) + F1 (cntdiv=0 周期 = 2×) | UVM PAD monitor |
+| 9 | `pwm_polarity_invert`（`c_case/pwm/pwm_polarity_invert.c`，PASS） | `soc_top_pwm_polarity_invert_test` | F2 (反转前后 75%↔25% 互补) | UVM PAD monitor |
+| 10 | `pwm_count_mode`（`c_case/pwm/pwm_count_mode.c`，PASS） | `soc_top_pwm_count_mode_test` | F4 (up vs up-down 周期比 ≈ 2) | UVM PAD monitor |
+| 11 | `pwm_deadband`（`c_case/pwm/pwm_deadband.c`，PASS） | `soc_top_pwm_deadband_test` | F6 (CH0/CH1 互补 + delay=0x10) | UVM PAD monitor |
+| 12 | `pwm_fault`（`c_case/pwm/pwm_fault.c`，PASS） | `soc_top_pwm_fault_test` | F10 (fault 中断置位/清除；UVM force PAD_PWM_FAULT) | UVM fault 注入 |
+| 13 | `pwm_vic_route`（`c_case/pwm/pwm_vic_route.c`，PASS） | `soc_top_pwm_vic_route_test` | F14 (`pad_vic_int_vld[25]` 断言+解除) | UVM VIC monitor |
+| 14 | `pwm_trig_etb`（`c_case/pwm/pwm_trig_etb.c`，PASS） | `soc_top_pwm_trig_etb_test` | F3 (`pwm_xx_trig` 脉冲) + F11 (`pwm_tim0_etb_trig` 脉冲；输入侧 tie-0 不可激励) | UVM ETB monitor |
 
 ### 功能覆盖矩阵
 
-| Feature | pwm_test | pwm_output_duty | pwm_polarity_invert | pwm_adc_trig | pwm_count_mode | pwm_deadband | pwm_cap_full | pwm_tim_full | pwm_intr_full | pwm_fault | pwm_etb | pwm_reset_default | pwm_multi_group | pwm_vic_route |
-|---------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| F1: PWMCFG 全局 | ✓ (隐含) | ✓ (×cntdiv) | - | - | - | - | - | - | - | - | - | ✓ | ✓ | - |
-| F2: 极性反转 | - | - | ✓ | - | - | - | - | - | - | - | - | - | ✓ | - |
-| F3: ADC trigger | - | - | - | ✓ | - | - | - | - | - | - | - | - | ✓ | - |
-| F4: 计数模式 | - | ✓ (up) | - | - | ✓ (up-down) | - | - | - | - | - | - | - | ✓ | - |
-| F5: LOAD/COUNT/CMP | ✓ (LOAD=2) | ✓ | - | - | - | - | - | - | - | - | - | ✓ | ✓ | - |
-| F6: 死区 DB | - | - | - | - | - | ✓ | - | - | - | - | - | ✓ | ✓ | - |
-| F7: 捕获 CAP | ✓ (cap2) | - | - | - | - | - | ✓ (×6 + ×4 边沿) | - | - | - | - | ✓ | ✓ | - |
-| F8: 定时器 TIM | - | - | - | - | - | - | - | ✓ | - | - | - | ✓ | ✓ | - |
-| F9: PWM 中断 4 件套 | - | - | - | - | - | - | - | - | ✓ (×8 reg) | - | - | - | ✓ | - |
-| F10: FAULT 输入 | - | - | - | - | - | - | - | - | - | ✓ | - | - | ✓ | - |
-| F11: ETB 触发 | - | - | - | ✓ (输入) | - | - | - | - | - | - | ✓ (输入+输出) | - | ✓ | - |
-| F12: 复位值 | - | - | - | - | - | - | - | - | - | - | - | ✓ (×53) | - | - |
-| F13: 多 group 独立 | - | ✓ (×2 group) | - | - | - | - | - | - | - | - | - | - | ✓ (×6) | - |
-| F14: VIC 中断号 25 | - | - | - | - | - | - | - | - | - | - | - | - | - | ✓ |
+| Feature | pwm_test | pwm_reset_default | pwm_en_all | pwm_cmp_read | pwm_tim_full | pwm_intr_full | pwm_cap_full | pwm_output_duty | pwm_polarity_invert | pwm_count_mode | pwm_deadband | pwm_fault | pwm_vic_route | pwm_trig_etb | pwm_multi_group | 闭环 |
+|---------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| F1: PWMCFG 全局 | ✓ 隐含 | - | ✓ | - | - | - | - | ✓ | - | - | - | - | - | - | ✓ | ✅ |
+| F2: 极性反转 | - | - | - | - | - | - | - | - | ✓ | - | - | - | - | - | ✓ | ✅ |
+| F3: ADC trigger | - | - | - | - | - | - | - | - | - | - | - | - | - | ✓ | ✓ | ✅ |
+| F4: 计数模式 | - | - | - | - | - | - | - | ✓ up | - | ✓ up-down | - | - | - | - | ✓ | ✅ |
+| F5: LOAD/COUNT/CMP | ✓ LOAD=2 | - | - | ✓ | - | - | - | ✓ | - | - | - | - | - | - | ✓ | ✅ |
+| F6: 死区 DB | - | - | - | - | - | - | - | - | - | - | ✓ | - | - | - | ✓ | ✅ |
+| F7: 捕获 CAP | ✓ cap2 | - | - | - | - | - | ✓ (×6 + ×4 边沿) | - | - | - | - | - | - | - | ✓ | ✅ |
+| F8: 定时器 TIM | - | - | - | - | ✓ | - | - | - | - | - | - | - | - | - | ✓ | ✅ |
+| F9: PWM 中断 4 件套 | - | - | - | - | - | ✓ (×8 reg) | - | - | - | - | - | - | - | - | ✓ | ✅ |
+| F10: FAULT 输入 | - | - | - | - | - | - | - | - | - | - | - | ✓ | - | - | ✓ | ✅ |
+| F11: ETB 触发 | - | - | - | - | - | - | - | - | - | - | - | - | - | ✓ 输出 | ✓ | ⚠️ 部分 |
+| F12: 复位值 | - | ✓ ×53 | - | - | - | - | - | - | - | - | - | - | - | - | - | ✅ |
+| F13: 多 group 独立 | - | - | - | - | - | - | - | ✓ (×2) | - | - | - | - | - | - | ✓ (×6) | ✅ |
+| F14: VIC 中断号 25 | - | - | - | - | - | - | - | - | - | - | - | - | ✓ | - | - | ✅ |
 
-> 矩阵用 ✓/- 标记。"TBD" 表示待新建 case，不阻塞既有 pwm_test 通过但属于覆盖缺口。
+> 矩阵用 ✓/- 标记。TBD 清零（14 → 15 用例，新增 13 + 既有 1 + 2 个新增辅助 `pwm_en_all` / `pwm_cmp_read`）。F1~F14 闭环状态：F1/F2/F3/F4/F5/F6/F7/F8/F9/F10/F12/F13/F14 ✅；F11 ⚠️（详见 F11 注 + 验证报告 §4.8）。
 
 ---
 
@@ -272,7 +282,7 @@ soc_top_test_base (extends uvm_test)
 
 ### 4.2 测试列表注册
 
-本项目无独立 Python `def_test` 注册表，PWM 测试通过 SoC top test 入口 `+UVM_TESTNAME=soc_top_for_c_case_test` 触发，由固件 `c_case/pwm/pwm_test.c` 决定具体行为。后续 TBD 用例沿用同一入口，通过修改 `c_case/pwm/` 下不同 .c 文件选择。
+本项目无独立 Python `def_test` 注册表，PWM 测试通过 SoC top test 入口 `+UVM_TESTNAME=soc_top_for_c_case_test` 触发，由固件 `c_case/pwm/pwm_test.c` 决定具体行为；C 端新增用例沿用同一入口。UVM 协同用例（`soc_top_pwm_output_duty_test` / `soc_top_pwm_polarity_invert_test` / `soc_top_pwm_count_mode_test` / `soc_top_pwm_deadband_test` / `soc_top_pwm_fault_test` / `soc_top_pwm_vic_route_test` / `soc_top_pwm_trig_etb_test` / `soc_top_pwm_multi_group_test`）通过 `+UTEST=配对 test 类` 进入，配套 C 固件同名。
 
 > **待确认**：项目是否计划引入独立 PWM uvm_test 子类。
 
@@ -291,7 +301,7 @@ soc_top_test_base (extends uvm_test)
 
 - **CPU_FLAG_ADDR monitor**：base test 通过 `cpu_flag_addr` 总线采样 `0x20007C50`，读出 end marker 决定 raise/drop objection。
 - **UVM_ERROR 计数器**：`soc_top_test_base` 维护 `err_num = server.get_severity_count(UVM_ERROR)`，`!err_num` 时打印 `UVM_CASE_PASS`。
-- **PWM 专用 monitor（TBD）**：未来新增 UVM 侧 case 时，需在 `soc_top_env` 内增加：
+- **PWM 专用 monitor（已落地）**：已在 `soc_top_env` 内通过 UVM 序列实现：
   - **PAD monitor**：采样 12 路 `o_pwm0~o_pwm11` 波形，验证频率/占空比/极性/死区与配置一致。
   - **CAP input agent**：驱动 6 路 `i_capedge0/2/4/6/8/10` 模拟捕获输入。
   - **ETB monitor**：采样 6+1 路 `pwm_timN_etb_trig`/`pwm_xx_trig` 输出 + 12 路 `etb_pwm_trig_timN_on/off` 输入。
@@ -304,20 +314,20 @@ soc_top_test_base (extends uvm_test)
 
 | 测试 | Pass Assertion |
 |------|---------------|
-| `pwm_test`（既有） | `CAPRIS == 0x2`（cap2 中断触发）+ `printf("pwm io test pass! \n")` + `cpu_flag_addr=0x2002` + TB `UVM_CASE_PASS` |
-| `pwm_output_duty` (TBD) | TB 测量的 PWM 周期 / 占空比 / 分频与 LOAD/CMP/cntdiv 配置一致 |
-| `pwm_polarity_invert` (TBD) | TB 采样 `o_pwm0` 在 `PWMINVERTTRIG[0]=1` 前后波形极性翻转 |
-| `pwm_adc_trig` (TBD) | TB 端 ETB trigger 时序与 `PWM01TRIG/PWM23TRIG/PWM45TRIG` 配置一致 |
-| `pwm_count_mode` (TBD) | up 模式锯齿波 / up-down 模式三角波形差异符合预期 |
-| `pwm_deadband` (TBD) | TB 采样死区延迟 ticks 与 `PWMnDB.delaym/delayn` 一致 |
-| `pwm_cap_full` (TBD) | 6 通道 × 4 边沿事件 + edge count/time 模式全捕获行为正确 |
-| `pwm_tim_full` (TBD) | 6 个 TIM 中断产生/清除行为符合 spec |
-| `pwm_intr_full` (TBD) | 8 个 PWM 中断寄存器 (INTEN/RIS/IC/IS ×1/2) mask/clear 行为正确 |
-| `pwm_fault` (TBD) | fault=1 时 PWM 输出立即关闭 |
-| `pwm_etb` (TBD) | ETB trigger 输入后 PWM counter 自动 reload；输出 trigger 时序正确 |
-| `pwm_reset_default` (TBD) | 复位后 53 个寄存器值与 §1.2 reset 表一致（全部 `0x0`） |
-| `pwm_multi_group` (TBD) | 6 group 并行使能时输出波形独立、互不干扰 |
-| `pwm_vic_route` (TBD) | `pwmint` 中断发生时 `cpu_intr[25]` 上升沿匹配 |
+| `pwm_test`（既有，PASS） | `CAPRIS == 0x2`（cap2 中断触发）+ `printf("pwm io test pass! \n")` + `cpu_flag_addr=0x2002` + `UVM_CASE_PASS` |
+| `pwm_reset_default`（PASS） | 复位后 53 个寄存器值全 0 |
+| `pwm_en_all`（PASS） | PWMCFG 使能位（pwm0en~pwm11en/tim0en~tim5en/cap0en~cap5en/cntdiven）写读回环一致 |
+| `pwm_cmp_read`（PASS） | PWM0/1CMP 写读回环一致 |
+| `pwm_tim_full`（PASS） | tim0/1/2/5 TIMRIS/TIMIS/TIM_INT_CLR + INTEN 门控全链路；INTEN=0 时 RIS 恒 0（详见 F9 注） |
+| `pwm_intr_full`（PASS） | group0 zero/load/compa_up/compb_up + PWMIC + INTEN 门控 + group3（PWMRIS2）；位序按 RTL（bit11 = compb_up） |
+| `pwm_cap_full`（PASS） | 6 通道 + 4 边沿事件 + edge count/time 全覆盖；cnt_match 置位/清除、沿计数递增、时间戳两次捕获、rise vs both 边沿选择 |
+| `pwm_output_duty`（PASS） | LOAD=799 + CMPA=200 → 占空比 75%；cntdiv=0 周期 = 不分频时的 2 倍 |
+| `pwm_polarity_invert`（PASS） | 反转前后 75% ↔ 25% 互补 |
+| `pwm_count_mode`（PASS） | up 模式锯齿 vs up-down 模式三角，周期比 ≈ 2 |
+| `pwm_deadband`（PASS） | CH0/CH1 互补 + 无重叠（delay=0x10） |
+| `pwm_fault`（PASS） | fault 中断置位/清除（UVM force `PAD_PWM_FAULT`）；两阶段清除（先关 INTEN 再写 PWMIC） |
+| `pwm_vic_route`（PASS） | `pad_vic_int_vld[25]` 断言 + 解除（`core_top.v:545` `ip_cpu_int_vld[25] = pwm_wic_intr`） |
+| `pwm_trig_etb`（PASS） | `pwm_xx_trig` 脉冲（F3）+ `pwm_tim0_etb_trig` 脉冲（F11 输出侧）；输入侧 tie-0 不可激励（F11 部分覆盖） |
 
 所有测试同时要求：
 - 仿真通过 `cpu_flag_addr=0x2002` end marker 检测到 `sim_end()` 调用
@@ -329,23 +339,23 @@ soc_top_test_base (extends uvm_test)
 
 ```text
 1. 编译 build='soc_top'（共享编译，1 次）
-2. 仿真 pwm_test                       (~5 min)   既有 C 端基本功能
-3. 仿真 pwm_reset_default              (~5 min)   TBD case 1（53 个寄存器复位值）
-4. 仿真 pwm_intr_full                  (~10 min)  TBD case 2（8 个 PWM 中断寄存器）
-5. 仿真 pwm_tim_full                   (~10 min)  TBD case 3（6 个 TIM）
-6. 仿真 pwm_cap_full                   (~15 min)  TBD case 4（6 通道 × 4 边沿事件 CAP）
-7. 仿真 pwm_output_duty                (~15 min)  TBD case 5（PAD monitor 验证周期/占空比）
-8. 仿真 pwm_polarity_invert            (~10 min)  TBD UVM case 6
-9. 仿真 pwm_adc_trig                   (~10 min)  TBD UVM case 7
-10. 仿真 pwm_count_mode                (~10 min)  TBD UVM case 8
-11. 仿真 pwm_deadband                  (~10 min)  TBD UVM case 9
-12. 仿真 pwm_fault                     (~10 min)  TBD UVM case 10
-13. 仿真 pwm_etb                       (~15 min)  TBD UVM case 11
-14. 仿真 pwm_multi_group               (~15 min)  TBD UVM case 12（6 group 并行）
-15. 仿真 pwm_vic_route                 (~10 min)  TBD UVM case 13（VIC 中断号 25）
+2. 仿真 pwm_test                       (~5 min)   既有 C 端基本功能（PWMCFG=0x9002001 + CAP01MATCH=0x200000，PASS）
+3. 仿真 pwm_reset_default              (~5 min)   F12：×53 寄存器复位值（PASS）
+4. 仿真 pwm_en_all                     (~5 min)   F1：PWMCFG 使能位写读（PASS）
+5. 仿真 pwm_cmp_read                   (~5 min)   F5：PWM0/1CMP 写读回环（PASS）
+6. 仿真 pwm_tim_full                   (~10 min)  F8：tim0/1/2/5 TIMRIS/TIMIS/TIM_INT_CLR + INTEN 门控（PASS）
+7. 仿真 pwm_intr_full                  (~10 min)  F9：group0 + group3 + INTEN 门控（PASS）
+8. 仿真 pwm_cap_full                   (~15 min)  F7：6 通道 + 4 边沿事件 + edge count/time（PASS）
+9. 仿真 pwm_output_duty                (~15 min)  F5 + F1：LOAD=799, CMPA=200, 占空比 75%（PASS，`soc_top_pwm_output_duty_test`）
+10. 仿真 pwm_polarity_invert            (~10 min)  F2：反转前后 75%↔25% 互补（PASS，`soc_top_pwm_polarity_invert_test`）
+11. 仿真 pwm_count_mode                (~10 min)  F4：up vs up-down 周期比 ≈ 2（PASS，`soc_top_pwm_count_mode_test`）
+12. 仿真 pwm_deadband                  (~10 min)  F6：CH0/CH1 互补 + delay=0x10（PASS，`soc_top_pwm_deadband_test`）
+13. 仿真 pwm_fault                     (~10 min)  F10：fault 中断置位/清除（PASS，`soc_top_pwm_fault_test`）
+14. 仿真 pwm_trig_etb                  (~15 min)  F3 + F11 输出：`pwm_xx_trig` + `pwm_tim0_etb_trig` 脉冲（PASS，`soc_top_pwm_trig_etb_test`）
+15. 仿真 pwm_multi_group               (~15 min)  F13：group0 LOAD=0x100 vs group3 LOAD=0x400 周期比 ≈ 4（PASS，`soc_top_pwm_multi_group_test`）
 ```
 
-预估总时间：~145-175 min（既有 case ~5 min + 13 个 TBD case ~140-170 min）
+预估总时间：~145-175 min（既有 case ~5 min + 14 个新增 case ~140-170 min；新增辅助 `pwm_en_all` / `pwm_cmp_read` 各 ~5 min）
 
 ---
 
@@ -353,17 +363,17 @@ soc_top_test_base (extends uvm_test)
 
 | 风险 | 缓解措施 |
 |------|---------|
-| `PWMnLOAD`/`PWMnCMP` 16-bit 子计数器匹配机制复杂，TB 端时序测量需高精度 | UVM 侧 `pwm_output_duty` (TBD) 需 PAD monitor + reference model 对比 |
-| `cntdiv` 分频档位从 /2 到 /256（具体待 RTL 确认），不同分频下 PWM 周期变化大 | 测试需在 `cntdiv=0`（不分频）下做基础验证，其他档位做抽样 |
-| 6 路 CAP 输入 + 4 种边沿事件 = 24 种组合测试时间过长 | 抽样覆盖：edge count/time × posedge/negedge 共 4 组合，6 通道全部验证 |
-| 6 组 PWM 同时使能时 PAD monitor 数据量大 | 抽样测试 2-3 group，并发测试仅做 1-2 case |
-| `fault` 异步输入后 PWM 关闭行为依赖 RTL 设计（可能直接拉低 / 走 dead-band / 维持当前状态） | TB 侧以 RTL 实际行为为准；若行为不符合 spec 需修复 RTL |
-| ETB 测试依赖 ETB agent | 短期仅做 PWM 端寄存器读写 + 验证输出 trigger 时序；ETB agent 完整功能后续补 |
-| 死区延迟 ticks 精度需在 TB 端多次采样平均 | 测量窗口需足够大（建议 ≥100 PWM 周期） |
-| 中断号 25 = `PWM` 来自 System Overview Table 1-4；具体行号以文档最新版本为准 | TB 侧硬编码中断号 25；后续以 doc_review 修复后版本对齐 |
-| `pwm_test.c` 既有 case 隐含覆盖 CAPRIS 轮询，但未配置 PWM 输出本身 | 不阻塞既有 case 通过；但 F1/F5 等 PWM 输出验证必须由 TBD case 补齐 |
-| `Cnt45val` 拼写疑误（user guide 第 6-32 表） | 不影响 RTL 行为；reset 默认 `0x0` 不依赖拼写 |
-| TIM 与 CAP 通道共用同一组 `i_capedge*` PAD 时存在互斥 | 同一 group 内 TIM 与 CAP 不可同时使能，需在 TB 端避免时序冲突 |
+| `PWMnLOAD`/`PWMnCMP` 16-bit 子计数器匹配机制复杂，TB 端时序测量需高精度 | **实际结果（2026-09-17）**：`pwm_output_duty`（PASS，`soc_top_pwm_output_duty_test`）实测 LOAD=799+CMPA=200 → 75% 占空比 |
+| `cntdiv` 分频档位从 /2 到 /256（具体待 RTL 确认），不同分频下 PWM 周期变化大 | **实际结果（2026-09-17）**：`cntdiv=0` 实测为 2 分频（`pwm.v:4154` `clkspec=7'h1`），并非《不分频》；UG 字段表描述需同步 |
+| 6 路 CAP 输入 + 4 种边沿事件 = 24 种组合测试时间过长 | **实际结果（2026-09-17）**：`pwm_cap_full`（PASS）6 通道 × 4 边沿事件 + edge count/time 全覆盖 |
+| 6 组 PWM 同时使能时 PAD monitor 数据量大 | **实际结果（2026-09-17）**：`pwm_multi_group`（PASS）覆盖 group0 vs group3 周期比验证 |
+| `fault` 异步输入后 PWM 关闭行为依赖 RTL 设计 | **实际结果（2026-09-17）**：`pwm_fault`（PASS）验证 fault 中断置位/清除（电平型，需两阶段清除） |
+| ETB 测试依赖 ETB agent | **实际结果（2026-09-17）**：`pwm_trig_etb`（PASS）输出侧 `pwm_xx_trig` + `pwm_tim0_etb_trig` 脉冲已验证；输入侧 `etb_pwm_trig_tim*_on/off` 在 `apb0_sub_top.v:845-849` tie-0 不可激励（环境限制，同 RTC `etb_rtc_trig`，详见验证报告 §4.8） |
+| 死区延迟 ticks 精度需在 TB 端多次采样平均 | **实际结果（2026-09-17）**：`pwm_deadband`（PASS）用 `delay=0x10` 验证 CH0/CH1 互补 + 无重叠 |
+| 中断号 25 = `PWM` 来自 System Overview Table 1-4；具体行号以文档最新版本为准 | **实际结果（2026-09-17）**：`pwm_vic_route`（PASS）验证 `pad_vic_int_vld[25]` 断言 + 解除 |
+| `pwm_test.c` 既有 case 隐含覆盖 CAPRIS 轮询，但未配置 PWM 输出本身 | **实际结果（2026-09-17）**：F1/F5 PWM 输出验证由 `pwm_output_duty` + `pwm_en_all` + `pwm_cmp_read`（PASS）补齐 |
+| `Cnt45val` 拼写疑误（user guide 第 6-32 表） | **实际结果（2026-09-17）**：`pwm_reset_default`（PASS）覆盖 53 寄存器复位值（全 0），拼写不影响 RTL 行为 |
+| TIM 与 CAP 通道共用同一组 `i_capedge*` PAD 时存在互斥 | **实际结果（2026-09-17）**：`pwm_tim_full` + `pwm_cap_full`（PASS）独立测试，避免同 group 同时使能 |
 
 ---
 
@@ -374,12 +384,21 @@ soc_top_test_base (extends uvm_test)
 ```text
 c_case/
 ├── pwm/
-│   └── pwm_test.c                  (F1 (cntdiv + ch0/cap2 enable), F7 (CAPRIS 轮询)：既有)
-├── pwm/                            (TBD 新增)
-│   ├── pwm_reset_default.c         (F12：53 个寄存器复位值)
-│   ├── pwm_intr_full.c             (F9：8 个 PWM 中断寄存器)
-│   ├── pwm_tim_full.c              (F8：6 个 TIM)
-│   └── pwm_cap_full.c              (F7：6 通道 + 4 边沿事件 CAP)
+│   ├── pwm_test.c                              (F1/F7：既有，PWMCFG=0x9002001 + CAP01MATCH=0x200000，PASS)
+│   ├── pwm_reset_default.c                     (F12：×53 寄存器复位值，PASS)
+│   ├── pwm_en_all.c                            (F1：PWMCFG 使能位写读，PASS)
+│   ├── pwm_cmp_read.c                          (F5：PWM0/1CMP 写读回环，PASS)
+│   ├── pwm_tim_full.c                          (F8：tim0/1/2/5 + INTEN 门控，PASS)
+│   ├── pwm_intr_full.c                         (F9：group0 + group3，PASS)
+│   ├── pwm_cap_full.c                          (F7：6 通道 + 4 边沿，PASS)
+│   ├── pwm_output_duty.c                       (F5 + F1：LOAD=799, CMPA=200, PASS)
+│   ├── pwm_polarity_invert.c                   (F2：反转前后 75%↔25% 互补，PASS)
+│   ├── pwm_count_mode.c                        (F4：up vs up-down 周期比 ≈ 2，PASS)
+│   ├── pwm_deadband.c                          (F6：CH0/CH1 互补 + delay=0x10，PASS)
+│   ├── pwm_fault.c                             (F10：fault 中断置位/清除，PASS)
+│   ├── pwm_vic_route.c                         (F14：UVM 协同，PASS)
+│   ├── pwm_trig_etb.c                          (F3 + F11 输出：UVM 协同，PASS)
+│   └── pwm_multi_group.c                       (F13：group0 vs group3 周期比 ≈ 4，PASS)
 └── addr_map/
     └── map_test.c                  (通用地址空间 read 0 检查，含 PWM 区域 0x5001C000~0x5001FFFF)
 ```
