@@ -26,6 +26,14 @@ else ifeq ($(findstring usi_i2c_test, ${C_TEST}), usi_i2c_test)
   DEF = USE_APB0+USE_APB0_USI+USI_I2C
 else ifeq ($(findstring usi_uart_test, ${C_TEST}), usi_uart_test)
   DEF = USE_APB0+USE_APB0_USI+USI_UART
+else ifeq ($(findstring usi_spi_, ${C_TEST}), usi_spi_)
+  DEF = USE_APB0+USE_APB0_USI+USI_SPI
+else ifeq ($(findstring usi_i2c_, ${C_TEST}), usi_i2c_)
+  DEF = USE_APB0+USE_APB0_USI+USI_I2C
+else ifeq ($(findstring usi_uart_, ${C_TEST}), usi_uart_)
+  DEF = USE_APB0+USE_APB0_USI+USI_UART
+else ifeq ($(findstring usi_, ${C_TEST}), usi_)
+  DEF = USE_APB0+USE_APB0_USI+USI_UART
 else ifeq ($(findstring pwm_test, ${C_TEST}), pwm_test)
   DEF = USE_APB0+USE_APB0_PWM
 else ifeq ($(findstring pwm_, ${C_TEST}), pwm_)
