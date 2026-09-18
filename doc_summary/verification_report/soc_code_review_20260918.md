@@ -93,3 +93,34 @@ S3 pass: CPU entered ISR 4 times
 S3 observation: mcause=0xb8000011 mepc=0x28b6   ← bit31=1 中断 + ID=17
 S4 pass: ISR stopped after TIM1 EOI
 ```
+
+---
+
+# 增补审查：intr_nesting.c + soc_top_intr_nesting_test.svh（2026-09-19）
+
+> 审查人：main（降级接管——doc_review 当日已两连败：上游 API error、
+> 推理片段零交付；本批含大量仿真取证，按 batch-1 模式本地审查落档）
+
+## 结论：可合入（bug 检测器，按设计 FAIL）
+
+## 1. intr_nesting.c — PASS（取证链完整，断言与诊断齐备）
+
+- 编排：#17 TIM0通道1 级别1(il=0x3F) 先到期 → low_handler 直线 nop 窗口
+  （mie=1）内 #18 TIM0通道2 级别3(il=0x7F) 到期 → 硬件嵌套 → nest_flag
+- RTL 事实链（E902_20191018.v 行号全在 header）：cliccfg@0xE000EC00
+  bit[4:1]=nlbits、intcfg[7:5]=级别、INTIE 合并字写 0x00010100（#17/#18
+  同字，字写更新全部 byte lane——debug1 发现的原简报 bug）、嵌套判据
+  il > cp0_iu_il（:15206-15210）
+- handler 侧停源（TIM stop+EOI）配对正确；诊断块含 tim1/tim2/clicintip/
+  intie/intcfg/curval 全读回
+- 取证（FSDB NPI Tcl 实测）：嵌套发生 → 29790 次重嵌套、窗口计数永不
+  收敛、终至 lw a1,4(sp) 假异常 → __dummy(0x600) 非法指令风暴；无嵌套
+  对照组干净完成 → E902 CLIC 嵌套路径疑似 RTL 缺陷
+
+## 2. soc_top_intr_nesting_test.svh — PASS（回归有界）
+
+- uvm_top.set_timeout(45ms,1)：C 侧挂死时 UVM_FATAL 终止（实测 14min
+  wall 内有界结束）；正确 RTL 下 C ~23ms 完成
+- line_mon 路径 tb_top.dut.x_cpu_top.tim0_wic_intr[1]（core_top.v:541
+  tim0_wic_intr[1:0]→[18:17]）✓
+- pkg include 无重复 ✓
