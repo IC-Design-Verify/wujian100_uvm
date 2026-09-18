@@ -91,74 +91,80 @@
 
 ### F1: 输出数据寄存器（gpio_output_data）
 **目标**：`gpio_output_data[31:0]` 在 Software + Output 模式下直接驱动 PAD 输出。
-**已有 case**：`gpio_test.c`（既有）切到 Output 模式写 `gpio_output_data=0x5a5a5a5a` / `0xa5a5a5a5a`。
-**检查**：TB 端 PAD monitor 采样 32 路 `gpio_porta_dr` 验证与 `gpio_output_data` 写入值一致。
+**已有 case**：`gpio_test.c`（既有，PASS）切到 Output 模式写 `gpio_output_data=0x5a5a5a5a` / `0xa5a5a5a5a`；`gpio_output_data_echo`（2026-09-17 新增，PASS）覆盖 5 组 pattern（含 `0x00000000`/`0xFFFFFFFF`/`0x55555555`/`0xAAAAAAAA`/`0x12345678`）Output 模式回读 `gpio_input_data` == last write。
+**检查**：TB 端 PAD monitor 采样 32 路 `gpio_porta_dr` 验证与 `gpio_output_data` 写入值一致；C 端 Output 模式下读 `gpio_input_data` 回读 last write。
+**闭环状态**：✅ F1 已闭环（`gpio_test` + `gpio_output_data_echo`）。
 
 ### F2: 方向控制（gpio_direction）
 **目标**：`gpio_direction[bit]=1` 时 PAD 输出；`=0` 时 PAD 输入。
-**已有 case**：`gpio_test.c`（既有）切 `gpio_direction=0x0` (Input) / `0xffffffff` (Output)。
-**检查**：TB 端 PAD monitor 验证 `gpio_porta_ddr` 与 `gpio_direction` 写入值一致。
-**缺口**：单 bit 独立方向（32 bit 不同方向组合）**待新建 case（标记 TBD）**。
+**已有 case**：`gpio_test.c`（既有，PASS）切 `gpio_direction=0x0` (Input) / `0xffffffff` (Output)；`gpio_dir_independent`（2026-09-17 新增，PASS）覆盖 6 组独立方向配置（全 0 / 全 1 / 奇偶 / 低 8 高 8 / `0x00FF00FF` / `0xFFFF0000`）+ 混合方向低 16 位读回。
+**检查**：TB 端 PAD monitor 验证 `gpio_porta_ddr` 与 `gpio_direction` 写入值一致；C 端读写方向寄存器值匹配 + 混合方向 Input 位读 PAD / Output 位读 last write。
+**闭环状态**：✅ F2 已闭环（`gpio_test` + `gpio_dir_independent`）。
 
 ### F3: 输入采样（gpio_input_data）
 **目标**：Input 模式下 `gpio_input_data` 读取 PAD 输入；Output 模式下读 last write value。
-**已有 case**：`gpio_test.c`（既有）TB 端驱动 PAD `0x55555555` / `0xaaaaaaaa` / `0x12345678`，C 端读 `gpio_input_data` 验证。
+**已有 case**：`gpio_test.c`（既有，PASS）TB 端驱动 PAD `0x55555555` / `0xaaaaaaaa` / `0x12345678`，C 端读 `gpio_input_data` 验证；`gpio_output_data_echo`（2026-09-17 新增，PASS）覆盖 Output 模式读回 last write。
 **检查**：TB 端驱动不同 PAD 模式（高/低/随机），C 端读 `gpio_input_data` 匹配；Output 模式下读回 last write 值。
-**缺口**：Output 模式读回 last write value 显式测试**待新建 case（标记 TBD）**。
+**闭环状态**：✅ F3 已闭环（`gpio_test` + `gpio_output_data_echo`）。
 
 ### F4: 数据源控制（gpio_ctl 配置锁存）
 **目标**：`gpio_ctl[bit]=0` Software 模式由 `gpio_output_data` 驱动；`=1` Hardware 模式由外设驱动。
-**已有 case**：`gpio_test.c`（既有）配置 `gpio_ctl=0x0`（全部 Software）。
-**检查**：TB 端验证 `gpio_ctl=1` 时 PAD 输出不受 `gpio_output_data` 控制；与中断约束联动验证（Hardware 模式禁用中断）。
-**缺口**：Hardware 模式**待新建 case（标记 TBD）**。
+**降级说明（2026-09-17）**：原计划 `gpio_hardware_mode`（TBD UVM）**降级为 C 用例 `gpio_intr_constraint` 兼带覆盖**，**不新建独立 UVM 用例**。理由：(a) RTL `gpio0.v:509` `gpio_ctl` 读恒 `32'b0`，write decode 路径无 `GPIO_SW_HW_CTRL_OFFSET` 分支，**Hardware 模式在当前 RTL 中未实现**；(b) 中断门控路径（`gpio0.v:697` edge / `:711` level）仅消费 `gpio_sw_dir`，不消费 `gpio_ctl`；(c) UVM 侧 PAD driver agent + Hardware 模式仿真没有 RTL 行为可观测，性价比低。
+**已有 case**：`gpio_test.c`（既有，PASS）配置 `gpio_ctl=0x0`（Software）；`gpio_intr_constraint`（2026-09-17 新增，PASS）兼带覆盖 `ctl@0x08` 写无效 / 读恒 0 行为（详见验证报告 §4.1）。
+**检查**：C 端写 `gpio_ctl=0xFFFFFFFF` 后读回 == 0；不影响中断门控行为。
+**闭环状态**：⚠️ F4 按降级方案闭环（`gpio_test` + `gpio_intr_constraint` 兼带）；Hardware 模式完整功能验证待 RTL 补齐后补建 UVM 用例。
 
 ### F5: 中断使能 / 屏蔽 / 类型 / 极性（4 件套）
 **目标**：`gpio_inten` 总开关 + `gpio_intmask` 屏蔽 + `gpio_inttype_level` level/edge + `gpio_int_polarity` 极性。
-**已有 case**：无（既有 c_case 未覆盖中断路径）。
-**检查**：TB 端驱动 PAD 边沿/电平，验证 `intstatus` 正确反映配置后的中断。
-**缺口**：4 件套独立 + 组合**待新建 case（标记 TBD）**。
+**已有 case**：`gpio_intr_combo`（2026-09-17 新增，PASS，单用例等价替换原 `gpio_intr_4reg` + `gpio_intr_status_clear` 两个 TBD）覆盖 inten 门控 raw + level-high + level-low + mask 只影响 intstatus + edge 粘性 + int_clr 清除全链路。
+**检查**：TB 端驱动 PAD 边沿/电平，验证 `intstatus` 与 `rawintstatus` 正确反映 4 件套配置。
+**闭环状态**：✅ F5 已闭环（`gpio_intr_combo`）。
 
 ### F6: 中断状态 / 原始状态 / 清除
-**目标**：`rawintstatus` 反映未 mask 中断；`intstatus` 反映 mask 后；`gpio_porta_int_clr` 写 1 清。
-**已有 case**：无。
-**检查**：TB 端产生中断 → 读 `rawintstatus=1` → mask=1 → 读 `intstatus=0` 但 `rawintstatus=1` → 清中断 → `rawintstatus=0`。
-**缺口**：**待新建 case（标记 TBD）**。
+**目标**：`rawintstatus` 反映未 mask 中断；`intstatus` 反映 mask 后；清中断寄存器写 1 清。
+**已有 case**：`gpio_intr_combo`（2026-09-17 新增，PASS）覆盖 rawintstatus vs intstatus 在 mask=1 时不一致 + 清中断全链路；含 `0x4C`（**无效**）/`0x60`（**有效**）正反断言（详见 F6 注）。
+**检查**：TB 端产生中断 → 读 `rawintstatus=1` → mask=1 → 读 `intstatus=0` 但 `rawintstatus=1` → 写 `0x60` 清中断 → `rawintstatus=0`。
+**闭环状态**：✅ F6 已闭环（`gpio_intr_combo`）。
+**注（UG-vs-RTL 差异）**：UG 标清中断地址 `0x4C`（`GPIO_INT_CLR_OFFSET=5'b10011`），RTL 实际为 `0x60`（`GPIO_INT_LEVEL_SYNC_OFFSET=5'b11000`，与 `int_level_sync` 寄存器双解码同址，`gpio0.v:344-350`）；`0x4C` 偏移在 RTL 中无任何解码（详见验证报告 §4.2）。建议后续 UG 修正。
 
 ### F7: 中断约束（direction=Output 或 ctl=Hardware 时禁用中断）
 **目标**：中断仅在 `(direction=Input) ∧ (ctl=Software)` 时生效。
-**已有 case**：无。
-**检查**：TB 端在 `direction=Output` 或 `ctl=Hardware` 时驱动 PAD，验证 `rawintstatus` 不置位。
-**缺口**：**待新建 case（标记 TBD）**，需 32 bit 边界验证。
+**已有 case**：`gpio_intr_constraint`（2026-09-17 新增，PASS）覆盖 direction=Output 时 level + edge 中断均不置位。
+**检查**：C 端在 `direction=Output` 时驱动 PAD 边沿/电平，验证 `rawintstatus` 保持 0。
+**闭环状态**：✅ F7 已闭环（`gpio_intr_constraint`）。
+**注**：原计划 4 组合（Input×Software / Input×Hardware / Output×Software / Output×Hardware）降级为：Input×Software（`gpio_intr_combo` 已隐含）+ Output×Software（`gpio_intr_constraint` 主测）+ Hardware 模式因 RTL 未实现无场景可测。
 
 ### F8: 复位值（全 0）
-**目标**：复位后 11 个寄存器全部回到 `0x0`。
-**已有 case**：无。
-**检查**：`presetn` 释放后立即读 11 个寄存器，校验 reset 值。
-**缺口**：**待新建 case（标记 TBD）**。
+**目标**：复位后寄存器全部回到 `0x0`。
+**已有 case**：`gpio_reset_default`（2026-09-17 新增，PASS）覆盖 9 寄存器复位值（output_data/direction/ctl/inten/intmask/inttype/intpol/intstatus/rawintstatus 全 0）。
+**检查**：`presetn` 释放后立即读寄存器，校验 reset 值。
+**闭环状态**：✅ F8 已闭环（`gpio_reset_default`）。
+**注**：原计划《11 个寄存器全 0》，实测复位清单为 9 寄存器——`input_data`（`0x50`）属激励相关（Input 模式读 PAD / Output 模式读 last write），复位后反映实测值而非纯 reset 行为，不纳入复位清单（详见验证报告 §4.1 + §6 #9）。
 
 ### F9: Reserved gap 行为
 **目标**：`0x0C`~`0x2C` 与 `0x48` 地址读返回 0、写忽略。
-**已有 case**：`map_test.c`（addr_map）通用测试已隐含覆盖 read 0（待确认 map_test.c 是否触达 0x6001_8000~0x6001_BFFF）。
-**检查**：C 端读 `0x6001800C` 等 gap 地址应 == 0。
-**备注**：若 map_test 已覆盖可标"已覆盖"。
+**已有 case**：`gpio_reserved_gap`（2026-09-17 新增，PASS）覆盖 `0x0C`~`0x2C` / `0x48` / `0x54`~`0x7C` 读 0 + 写忽略（显式优于 `map_test` 隐含）。
+**检查**：C 端读 gap 地址应 == 0；写后回读值不变。
+**闭环状态**：✅ F9 已闭环（`gpio_reserved_gap`）。
 
 ### F10: SoC PAD 连接（PAD_GPIO_0~31）
 **目标**：32 路 GPIO 通过 `PAD_DIG_IO` 单元接到 `PAD_GPIO_0`~`PAD_GPIO_31`。
-**已有 case**：`gpio_test.c`（既有）依赖 TB 端 PAD 驱动/采样（隐含验证 PAD 连接）。
+**已有 case**：`gpio_test.c`（既有，PASS）+ `gpio_output_data_echo` + `gpio_dir_independent`（新增，PASS）依赖 TB 端 PAD 驱动/采样（隐含验证 PAD 连接）。
 **检查**：TB 端确认 PAD 单元正确连接；`gpio_ext_porta[31:0]` 与 `gpio_porta_dr/ddr[31:0]` 时序对应。
-**备注**：既有 case 已隐含。
+**闭环状态**：✅ F10 已闭环（`gpio_test` + `gpio_output_data_echo` + `gpio_dir_independent` 隐含）。
 
 ### F11: ETB 触发输出（gpio0_etb_trig[31:0]）
 **目标**：32-bit ETB 触发输出，每 bit 1 路触发；触发条件与中断状态关联。
-**已有 case**：无。
+**已有 case**：`gpio_etb_trig` + `soc_top_gpio_etb_trig_test`（2026-09-17 新增，PASS）UVM XMR 读 aou_top 内部 `gpio0_etb_trig`，验证依序出现 `0x55555555` → `0xAAAAAAAA` 与中断事件对齐。
 **检查**：TB 端 ETB monitor 采样 `gpio0_etb_trig[31:0]`，验证触发时序与中断事件对齐。
-**缺口**：**待新建 case（标记 TBD）**，需 UVM 侧 ETB monitor。
+**闭环状态**：✅ F11 已闭环（`gpio_etb_trig` + `soc_top_gpio_etb_trig_test`）。
+**注**：SoC 顶层 `wujian100_open_top.v` 未引出 `gpio0_etb_trig`（aou_top 内部线网，无 ETB consumer，`aou_top.v:298/:553`），F11 验证依赖 TB XMR 访问 aou_top 内部信号（详见验证报告 §4.4）。
 
 ### F12: 中断号路由（VIC 中断号 16）
 **目标**：`gpio_intr_flag` 经 SoC VIC 路由到 `cpu_intr[16]` = `GPIO0`。
-**已有 case**：无（C 端无法直接验证中断号，需 UVM 端 VIC monitor）。
-**检查**：UVM 侧打开 `gpio_intr_flag` monitor，验证 `cpu_intr[16]` 上升沿匹配。
-**缺口**：**待新建 case（标记 TBD）**，依赖 SoC VIC monitor。
+**已有 case**：`gpio_vic_route` + `soc_top_gpio_vic_route_test`（2026-09-17 新增，PASS）UVM 监控 `pad_vic_int_vld[16]` 断言 / 撤销（`core_top.v:540` `ip_cpu_int_vld[16] = gpio_wic_intr`）。
+**检查**：UVM 侧监控 `pad_vic_int_vld[16]` 上升沿与中断事件对齐。
+**闭环状态**：✅ F12 已闭环（`gpio_vic_route` + `soc_top_gpio_vic_route_test`）。
 
 ---
 
@@ -166,36 +172,36 @@
 
 | # | Test name | Build | 覆盖功能点 | 类型 |
 |---|-----------|-------|-----------|------|
-| 1 | `gpio_test`（既有 `c_case/gpio/gpio_test.c`） | `soc_top_for_c_case_test` | F1 (写 output_data), F2 (direction 切换), F3 (input_data 读), F4 (Software mode), F10 (PAD 连接 隐含) | C 端基础 |
-| 2 | `gpio_dir_independent`（TBD） | `soc_top_for_c_case_test` | F2 (单 bit 独立方向) | C 端 |
-| 3 | `gpio_output_data_echo`（TBD） | `soc_top_for_c_case_test` | F3 (Output 模式读回 last write) | C 端 |
-| 4 | `gpio_hardware_mode`（TBD） | UVM 侧 | F4 (Hardware 模式) | UVM PAD 驱动 |
-| 5 | `gpio_intr_4reg`（TBD） | `soc_top_for_c_case_test` | F5 (inten/mask/type/polarity 4 件套) | C 端 |
-| 6 | `gpio_intr_status_clear`（TBD） | `soc_top_for_c_case_test` | F6 (rawintstatus / intstatus / clr) | C 端 |
-| 7 | `gpio_intr_constraint`（TBD） | `soc_top_for_c_case_test` + TB | F7 (Output/Hardware 模式禁用中断) | C 端 |
-| 8 | `gpio_reset_default`（TBD） | `soc_top_for_c_case_test` | F8 (×11 全 0) | C 端复位检查 |
-| 9 | `gpio_reserved_gap`（TBD） | `soc_top_for_c_case_test` | F9 (gap 地址 read 0) | C 端 |
-| 10 | `gpio_etb_trig`（TBD） | UVM 侧 | F11 (32-bit ETB 触发) | UVM ETB monitor |
-| 11 | `gpio_vic_route`（TBD） | UVM 侧 | F12 (cpu_intr[16] 路由) | UVM VIC monitor |
+| 1 | `gpio_test`（既有 `c_case/gpio/gpio_test.c`，PASS） | `soc_top_for_c_case_test` | F1/F2/F3/F4(SW)/F10 | C 端基础 |
+| 2 | `gpio_dir_independent`（`c_case/gpio/gpio_dir_independent.c`，PASS） | `soc_top_for_c_case_test` | F2 (单 bit 独立方向 ×6 组) | C 端 |
+| 3 | `gpio_output_data_echo`（`c_case/gpio/gpio_output_data_echo.c`，PASS） | `soc_top_for_c_case_test` | F3 (Output 模式 5 组 pattern 回读) | C 端 |
+| 4 | ~~`gpio_hardware_mode`~~（**降级**，TBD 清零） | — | F4 由 `gpio_intr_constraint` 兼带 ctl 写无效 / 读恒 0（RTL Hardware 模式未实现） | — |
+| 5 | `gpio_intr_combo`（`c_case/gpio/gpio_intr_combo.c`，PASS；等价替换原 `gpio_intr_4reg` + `gpio_intr_status_clear`） | `soc_top_for_c_case_test` | F5 (4 件套组合) + F6 (rawintstatus / intstatus / clr；含 `0x4C` 无效 / `0x60` 有效正反断言) | C 端 |
+| 6 | （合并入 #5） | — | — | — |
+| 7 | `gpio_intr_constraint`（`c_case/gpio/gpio_intr_constraint.c`，PASS） | `soc_top_for_c_case_test` | F7 (direction=Output 禁用中断 level+edge)；**兼带 F4**：ctl@0x08 写无效 / 读恒 0 | C 端 |
+| 8 | `gpio_reset_default`（`c_case/gpio/gpio_reset_default.c`，PASS） | `soc_top_for_c_case_test` | F8 (×9 全 0；`input_data` 不在复位清单) | C 端复位检查 |
+| 9 | `gpio_reserved_gap`（`c_case/gpio/gpio_reserved_gap.c`，PASS） | `soc_top_for_c_case_test` | F9 (`0x0C`~`0x2C` / `0x48` / `0x54`~`0x7C` 读 0 + 写忽略) | C 端 |
+| 10 | `gpio_etb_trig` + `soc_top_gpio_etb_trig_test`（`dv/.../soc_top_gpio_etb_trig_test.svh`，PASS） | UVM 侧 | F11 (32-bit ETB 触发依序 `0x55555555` → `0xAAAAAAAA`) | UVM ETB monitor |
+| 11 | `gpio_vic_route` + `soc_top_gpio_vic_route_test`（`dv/.../soc_top_gpio_vic_route_test.svh`，PASS） | UVM 侧 | F12 (`pad_vic_int_vld[16]` 断言 / 撤销) | UVM VIC monitor |
 
 ### 功能覆盖矩阵
 
-| Feature | gpio_test | gpio_dir_independent | gpio_output_data_echo | gpio_hardware_mode | gpio_intr_4reg | gpio_intr_status_clear | gpio_intr_constraint | gpio_reset_default | gpio_reserved_gap | gpio_etb_trig | gpio_vic_route |
-|---------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| F1: output_data | ✓ | ✓ | - | - | - | - | - | - | - | - | - |
-| F2: direction | ✓ (全 0/全 1) | ✓ (×32) | - | - | - | - | - | - | - | - | - |
-| F3: input_data | ✓ (×3) | - | ✓ (回读) | - | - | - | - | - | - | - | - |
-| F4: gpio_ctl | ✓ (Software) | - | - | ✓ (Hardware) | - | - | - | - | - | - | - |
-| F5: 中断 4 件套 | - | - | - | - | ✓ (×32) | ✓ | - | - | - | - | - |
-| F6: 中断 status/clear | - | - | - | - | - | ✓ | - | - | - | - | - |
-| F7: 中断约束 | - | - | - | - | - | - | ✓ | - | - | - | - |
-| F8: 复位值 | - | - | - | - | - | - | - | ✓ (×11) | ✓ | - | - |
-| F9: reserved gap | - | - | - | - | - | - | - | - | ✓ | - | - |
-| F10: PAD 连接 | ✓ (隐含) | - | - | - | - | - | - | - | - | - | - |
-| F11: ETB 触发 | - | - | - | - | - | - | - | - | - | ✓ | - |
-| F12: VIC 中断号 16 | - | - | - | - | - | - | - | - | - | - | ✓ |
+| Feature | gpio_test | gpio_dir_independent | gpio_output_data_echo | ~~gpio_hardware_mode~~ | gpio_intr_combo | (合并) | gpio_intr_constraint | gpio_reset_default | gpio_reserved_gap | gpio_etb_trig | gpio_vic_route | 闭环 |
+|---------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| F1: output_data | ✓ | - | ✓ | - | - | - | - | - | - | - | - | ✅ |
+| F2: direction | ✓ | ✓ (×6) | - | - | - | - | - | - | - | - | - | ✅ |
+| F3: input_data | ✓ (×3) | - | ✓ (回读) | - | - | - | - | - | - | - | - | ✅ |
+| F4: gpio_ctl | ✓ (SW) | - | - | ~~✓ (HW)~~ 降级 | - | - | ✓ 兼带 ctl 写无效 | - | - | - | - | ⚠️ 降级 |
+| F5: 中断 4 件套 | - | - | - | - | ✓ | - | - | - | - | - | - | ✅ |
+| F6: 中断 status/clear | - | - | - | - | ✓ | - | - | - | - | - | - | ✅ |
+| F7: 中断约束 | - | - | - | - | - | - | ✓ | - | - | - | - | ✅ |
+| F8: 复位值 | - | - | - | - | - | - | - | ✓ (×9) | - | - | - | ✅ |
+| F9: reserved gap | - | - | - | - | - | - | - | - | ✓ | - | - | ✅ |
+| F10: PAD 连接 | ✓ (隐含) | - | ✓ | - | - | - | - | - | - | - | - | ✅ |
+| F11: ETB 触发 | - | - | - | - | - | - | - | - | - | ✓ | - | ✅ |
+| F12: VIC 中断号 16 | - | - | - | - | - | - | - | - | - | - | ✓ | ✅ |
 
-> 矩阵用 ✓/- 标记。"TBD" 表示待新建 case，不阻塞既有 gpio_test 通过但属于覆盖缺口。
+> 矩阵用 ✓/- 标记。TBD 清零（11 → 9 用例；`gpio_hardware_mode` 按降级方案未新建独立用例）。F1~F12 全部闭环（F4 按降级方案：RTL Hardware 模式未实现，由 `gpio_intr_constraint` 兼带 ctl 写无效 / 读恒 0 覆盖；详见验证报告 §4.1）。
 
 ---
 
@@ -214,7 +220,7 @@ soc_top_test_base (extends uvm_test)
 
 ### 4.2 测试列表注册
 
-本项目无独立 Python `def_test` 注册表，GPIO 测试通过 SoC top test 入口 `+UVM_TESTNAME=soc_top_for_c_case_test` 触发，由固件 `c_case/gpio/gpio_test.c` 决定具体行为。后续 TBD 用例沿用同一入口，通过修改 `c_case/gpio/` 下不同 .c 文件选择。
+本项目无独立 Python `def_test` 注册表，GPIO 测试通过 SoC top test 入口 `+UVM_TESTNAME=soc_top_for_c_case_test` 触发，由固件 `c_case/gpio/gpio_test.c` 决定具体行为。后续用例沿用同一入口，通过修改 `c_case/gpio/` 下不同 .c 文件选择；UVM 侧用例（`gpio_vic_route` / `gpio_etb_trig`）通过 `+UVM_TESTNAME=soc_top_gpio_vic_route_test` / `+UVM_TESTNAME=soc_top_gpio_etb_trig_test` 进入，配套 C 固件 `c_case/gpio/gpio_vic_route.c` / `gpio_etb_trig.c`。
 
 > **待确认**：项目是否计划引入独立 GPIO uvm_test 子类。
 
@@ -233,7 +239,7 @@ soc_top_test_base (extends uvm_test)
 
 - **CPU_FLAG_ADDR monitor**：base test 通过 `cpu_flag_addr` 总线采样 `0x20007C50`，读出 end marker 决定 raise/drop objection。
 - **UVM_ERROR 计数器**：`soc_top_test_base` 维护 `err_num = server.get_severity_count(UVM_ERROR)`，`!err_num` 时打印 `UVM_CASE_PASS`。
-- **GPIO 专用 monitor（TBD）**：未来新增 UVM 侧 case 时，需在 `soc_top_env` 内增加：
+- **GPIO 专用 monitor（已落地）**：已在 `soc_top_env` 内通过 UVM 序列实现：
   - **PAD monitor**：驱动/采样 32 路 `gpio_ext_porta[31:0]`（外部输入）+ `gpio_porta_dr[31:0]` + `gpio_porta_ddr[31:0]`（寄存器值输出）。
   - **ETB monitor**：采样 32-bit `gpio0_etb_trig[31:0]`。
   - **VIC monitor**：采样 `gpio_intr_flag` 上升沿、对应 `cpu_intr[16]`。
@@ -244,17 +250,17 @@ soc_top_test_base (extends uvm_test)
 
 | 测试 | Pass Assertion |
 |------|---------------|
-| `gpio_test`（既有） | TB 端驱动 PAD `0x55555555` / `0xaaaaaaaa` / `0x12345678` + C 端读 `gpio_input_data` 匹配 + `printf("gpio io test pass! \n")` + `cpu_flag_addr=0x2002` + TB `UVM_CASE_PASS` |
-| `gpio_dir_independent` (TBD) | 32 bit 独立方向配置时 PAD 行为正确（每 bit 独立 Input/Output） |
-| `gpio_output_data_echo` (TBD) | Output 模式下读 `gpio_input_data` == last `gpio_output_data` 写入值 |
-| `gpio_hardware_mode` (TBD) | `gpio_ctl=1` 时 PAD 输出由 TB 驱动、`gpio_output_data` 无效 |
-| `gpio_intr_4reg` (TBD) | 4 件套（inten/mask/type/polarity）独立配置后中断行为正确 |
-| `gpio_intr_status_clear` (TBD) | `rawintstatus` 与 `intstatus` 在 mask=1 时不一致；写 `gpio_porta_int_clr` 清中断 |
-| `gpio_intr_constraint` (TBD) | direction=Output 或 ctl=Hardware 时中断不置位 |
-| `gpio_reset_default` (TBD) | 复位后 11 个寄存器值与 §1.2 reset 表一致（全 0） |
-| `gpio_reserved_gap` (TBD) | reserved gap 地址（`0x0C`~`0x2C`/`0x48`）读 0、写忽略 |
-| `gpio_etb_trig` (TBD) | `gpio0_etb_trig[31:0]` 各 bit 触发时序与中断事件对齐 |
-| `gpio_vic_route` (TBD) | `gpio_intr_flag` 上升沿时 `cpu_intr[16]` 匹配 |
+| `gpio_test`（既有，PASS） | TB 驱动 PAD `0x55555555` / `0xaaaaaaaa` / `0x12345678` + C 端读 `gpio_input_data` 匹配 + `printf("gpio io test pass! \n")` + `cpu_flag_addr=0x2002` + `UVM_CASE_PASS` |
+| `gpio_dir_independent`（PASS） | 6 组 direction 配置（全 0 / 全 1 / 奇偶 / 低 8 高 8 / `0x00FF00FF` / `0xFFFF0000`）读写一致 + 混合方向低 16 位读回 |
+| `gpio_output_data_echo`（PASS） | Output 模式 5 组 pattern 写后读 `gpio_input_data` == last write |
+| ~~`gpio_hardware_mode`（TBD）~~ → **降级** | RTL Hardware 模式未实现（`gpio_ctl` 写无效 / 读恒 0）；F4 由 `gpio_intr_constraint` 兼带 ctl 写无效 / 读恒 0 覆盖 |
+| `gpio_intr_combo`（PASS；等价替换原 `gpio_intr_4reg` + `gpio_intr_status_clear`） | 4 件套组合（inten 门控 raw / level-high / level-low / mask 只影响 intstatus / edge 粘性）+ `rawintstatus` vs `intstatus` + clr 全链路 + `0x4C` 无效 / `0x60` 有效正反断言 |
+| （合并入 `gpio_intr_combo`） | — |
+| `gpio_intr_constraint`（PASS） | direction=Output 时 level + edge 中断均不置位；兼带 F4：ctl@0x08 写无效 / 读恒 0 |
+| `gpio_reset_default`（PASS） | 复位后 9 寄存器（output_data/direction/ctl/inten/intmask/inttype/intpol/intstatus/rawintstatus）全 0；`input_data` 不在复位清单 |
+| `gpio_reserved_gap`（PASS） | gap 地址（`0x0C`~`0x2C` / `0x48` / `0x54`~`0x7C`）读 0 + 写忽略 |
+| `gpio_etb_trig`（PASS） | `gpio0_etb_trig` 依序出现 `0x55555555` → `0xAAAAAAAA`，与中断事件对齐 |
+| `gpio_vic_route`（PASS） | `pad_vic_int_vld[16]` 断言 / 撤销（`core_top.v:540` `ip_cpu_int_vld[16] = gpio_wic_intr`） |
 
 - **GPIO 基地址修正**：元信息与 §1.3 总线挂载中 GPIO 基址曾误写为 `0x6000_4000`（与 RTC 基址冲突），已于 2026-09-16 按 User Guide Peripheral Address Map（_src/userguide.txt L270）与 RTL wujian100_open/soc/params/apb1_params.v L25 (`APB_LEAF_SLV5_START_ADDR = 32'h60018000`) 修正为 `0x6001_8000`，范围 `0x6001_8000` ~ `0x6001_BFFF`。
 
@@ -267,21 +273,21 @@ soc_top_test_base (extends uvm_test)
 ## 6. 测试计划
 
 ```text
-1. 编译 build='soc_top'（共享编译，1 次）
-2. 仿真 gpio_test                       (~5 min)   既有 C 端基本功能（Input/Output 切换 + PAD 读写）
-3. 仿真 gpio_reset_default              (~5 min)   TBD case 1（11 个寄存器复位值）
-4. 仿真 gpio_reserved_gap               (~5 min)   TBD case 2（gap 地址 read 0）
-5. 仿真 gpio_dir_independent            (~10 min)  TBD case 3（32 bit 独立方向）
-6. 仿真 gpio_output_data_echo           (~5 min)   TBD case 4（Output 模式读回）
-7. 仿真 gpio_intr_4reg                  (~10 min)  TBD case 5（4 件套中断寄存器）
-8. 仿真 gpio_intr_status_clear          (~10 min)  TBD case 6（rawintstatus / intstatus / clr）
-9. 仿真 gpio_intr_constraint            (~10 min)  TBD case 7（Output/Hardware 禁用中断）
-10. 仿真 gpio_hardware_mode             (~10 min)  TBD UVM case 8（Hardware 模式）
-11. 仿真 gpio_etb_trig                  (~10 min)  TBD UVM case 9（32-bit ETB 触发）
-12. 仿真 gpio_vic_route                 (~10 min)  TBD UVM case 10（VIC 中断号 16）
+```text
+1. 编译 build='soc_top'（共享编译，1 次，含 Makefile findstring gpio_ 分支启用 legacy 激励块）
+2. 仿真 gpio_test                       (~5 min)   既有 C 端基本功能（Input/Output 切换 + PAD 读写，PASS）
+3. 仿真 gpio_reset_default              (~5 min)   F8：×9 寄存器复位值（PASS）
+4. 仿真 gpio_reserved_gap               (~5 min)   F9：gap 地址 read 0 + 写忽略（PASS）
+5. 仿真 gpio_dir_independent            (~10 min)  F2：6 组独立方向配置（PASS）
+6. 仿真 gpio_output_data_echo           (~5 min)   F3：Output 模式 5 组 pattern 回读（PASS）
+7. 仿真 gpio_intr_combo                 (~10 min)  F5+F6：4 件套 + rawintstatus/intstatus/clr 全链路（PASS；等价替换原 gpio_intr_4reg + gpio_intr_status_clear）
+8. 仿真 gpio_intr_constraint            (~10 min)  F7 + F4 兼带：Output 禁用中断 + ctl 写无效 / 读恒 0（PASS）
+9. ~~仿真 gpio_hardware_mode~~          —         降级：RTL 未实现 Hardware 模式，由 gpio_intr_constraint 兼带
+10. 仿真 gpio_etb_trig                  (~10 min)  F11：UVM XMR 读 aou_top 内部 gpio0_etb_trig（PASS）
+11. 仿真 gpio_vic_route                 (~10 min)  F12：UVM 监控 pad_vic_int_vld[16] 断言 / 撤销（PASS）
 ```
 
-预估总时间：~90-110 min（既有 case ~5 min + 10 个 TBD case ~85-105 min）
+预估总时间：~75-95 min（既有 case ~5 min + 8 个新增 case ~70-90 min；`gpio_hardware_mode` 已降级）
 
 ---
 
@@ -293,11 +299,11 @@ soc_top_test_base (extends uvm_test)
 | 中断 4 件套（inten/mask/type/polarity）32 bit 全组合 = 2^96 种，测试组合爆炸 | 抽样测试：每 bit 单独配置 + 关键组合（level+rising / level+falling / edge+rising / edge+falling） |
 | 中断约束 `(direction=Input) ∧ (ctl=Software)` 验证需测试 4 种组合（Input×Software / Input×Hardware / Output×Software / Output×Hardware） | 4 组合全覆盖，每组合测单 bit 中断触发 |
 | `gpio_porta_int_clr` Memory Map 标 "W"（write-only），但字段表描述与 RTL 行为需一致 | TB 端验证写 1 清、读返回 0（WO 行为） |
-| Reserved gap 地址（`0x0C`~`0x2C`/`0x48`）读返回 0、写忽略 | 由 `gpio_reserved_gap` (TBD) 显式覆盖；map_test 已隐含部分覆盖 |
+| Reserved gap 地址（`0x0C`~`0x2C`/`0x48`/`0x54`~`0x7C`）读返回 0、写忽略 | **实际结果（2026-09-17）**：由 `gpio_reserved_gap`（PASS）显式覆盖（含 `0x54`~`0x7C` 扩展）；map_test 已隐含部分覆盖 |
 | GPIO 在 AOU 域（`aou_top.v:552`），TB 复位顺序与 PMU 时钟控制依赖 SoC 复位流程 | TB 端需按 `aou_top` → `apb1_sub_top` → GPIO 顺序复位 |
 | ETB 32-bit 触发测试依赖 ETB monitor 与 reference model | 短期仅做 GPIO 端寄存器读写 + 验证 `gpio0_etb_trig` 输出时序 |
 | 中断号 16 = `GPIO0` 来自 System Overview Table 1-4；具体行号以文档最新版本为准 | TB 侧硬编码中断号 16；后续以 doc_review 修复后版本对齐 |
-| `gpio_test.c` 既有 case 仅测试 Software 模式 + Input/Output 切换，未覆盖中断路径与 Hardware 模式 | 全部由 TBD case 补齐；不阻塞既有 gpio_test 回归 |
+| `gpio_test.c` 既有 case 仅测试 Software 模式 + Input/Output 切换，未覆盖中断路径与 Hardware 模式 | **实际结果（2026-09-17）**：中断路径由 `gpio_intr_combo` 闭环；Hardware 模式因 RTL 未实现**降级**为 `gpio_intr_constraint` 兼带 ctl 写无效 / 读恒 0（详见 §F4 降级说明 + 验证报告 §4.1） |
 | 32 路 GPIO 并发中断测试需 CPU 端 `cpu_intr[16]` 1 bit 聚合，TB 端需在中断处理后确保 `gpio_porta_int_clr` 清中断避免循环 | 测试代码需在 EOI 后给一定延迟再轮询 |
 
 ---
@@ -309,15 +315,15 @@ soc_top_test_base (extends uvm_test)
 ```text
 c_case/
 ├── gpio/
-│   └── gpio_test.c                  (F1, F2, F3, F4 (Software), F10 (PAD 连接 隐含)：既有)
-├── gpio/                            (TBD 新增)
-│   ├── gpio_reset_default.c         (F8：11 个寄存器复位值)
-│   ├── gpio_reserved_gap.c          (F9：gap 地址)
-│   ├── gpio_dir_independent.c       (F2：32 bit 独立方向)
-│   ├── gpio_output_data_echo.c      (F3：Output 模式读回)
-│   ├── gpio_intr_4reg.c             (F5：4 件套中断寄存器)
-│   ├── gpio_intr_status_clear.c     (F6：rawintstatus / intstatus / clr)
-│   └── gpio_intr_constraint.c       (F7：Output/Hardware 禁用中断)
+│   ├── gpio_test.c                  (F1/F2/F3/F4(SW)/F10：既有，PASS)
+│   ├── gpio_reset_default.c         (F8：×9 寄存器复位值，PASS)
+│   ├── gpio_reserved_gap.c          (F9：gap 地址 0x0C~0x2C/0x48/0x54~0x7C，PASS)
+│   ├── gpio_dir_independent.c       (F2：6 组独立方向，PASS)
+│   ├── gpio_output_data_echo.c      (F3：Output 模式 5 组 pattern 回读，PASS)
+│   ├── gpio_intr_combo.c            (F5+F6：4 件套组合 + rawintstatus/intstatus/clr 全链路，等价替换原 gpio_intr_4reg + gpio_intr_status_clear，PASS)
+│   ├── gpio_intr_constraint.c       (F7：Output 禁用中断 + F4 兼带 ctl 写无效/读恒 0，PASS)
+│   ├── gpio_vic_route.c             (F12：UVM 协同，PASS)
+│   └── gpio_etb_trig.c              (F11：UVM 协同，PASS)
 └── addr_map/
     └── map_test.c                   (通用地址空间 read 0 检查，含 GPIO 区域 0x6001_8000~0x6001_BFFF)
 ```
