@@ -28,6 +28,8 @@ else ifeq ($(findstring usi_uart_test, ${C_TEST}), usi_uart_test)
   DEF = USE_APB0+USE_APB0_USI+USI_UART
 else ifeq ($(findstring pwm_test, ${C_TEST}), pwm_test)
   DEF = USE_APB0+USE_APB0_PWM
+else ifeq ($(findstring pwm_, ${C_TEST}), pwm_)
+  DEF = USE_APB0+USE_APB0_PWM
 else ifeq ($(findstring map_test, ${C_TEST}), map_test)
   DEF = USE_TOP_SIM+USE_ADDR_MAP
 else ifeq ($(findstring e902_had_test, ${C_TEST}), e902_had_test)
