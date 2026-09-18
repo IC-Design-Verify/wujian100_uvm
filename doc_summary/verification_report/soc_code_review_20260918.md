@@ -49,3 +49,47 @@
 
 - 仅追加一行 `include "soc_top_intr_multi_test.svh"`，位置在 dma 之后、
   无重复、编译零错误 ✓
+
+---
+
+# 增补审查：intr_isr_basic.c（2026-09-19）
+
+> 审查人：main（降级接管——doc_review 连续两次失败：上游 API error、
+> 回复为推理片段且无交付物。按 batch-1 同款降级模式处理）
+
+## 结论：可合入（PASS × 3 / 问题 × 0）
+
+## 1. naked asm handler — PASS
+
+- 仅使用 x10/x11/x12/sp 四个寄存器；x10/x11/x12 保存（sp-16 三槽）与
+  恢复（mret 前）严格配对，sp 增减配对 ✓
+- rv32emc 下 `la` 展开 lui+addi（目标寄存器 x11，无隐藏临时寄存器），
+  异步中断语义下所触寄存器全在保存集内 ✓
+- mret 不推进 mepc = 中断返回语义（区别于 addr_misalign 的异常跳过语义）；
+  实证：ISR 进入 4 次后主程序 poll 循环正常退出、S4 正常执行 ✓
+
+## 2. 向量表选址 0xA000 — PASS
+
+- objdump 实测：.text=0x8eb9、.data 至 0x96f8、.bss 至 0x9730、
+  linker RAND 区始于 0xeff0；表（256B）放 0xA000-0xA0FF，上下均留余量 ✓
+- 实证：0x8000 时代 S1 打印乱码（砸中 .text），挪 0xA000 后打印干净、
+  全用例 PASS；注释已固化"勿改回"警告 ✓
+
+## 3. S4 停表→EOI 顺序 — PASS
+
+- TIM user 模式到期自动重装 load（0x400 拍周期性重触发），仅读 EOI
+  无法阻止下一次到期（实测 EOI-only 后 ISR 仍 +454 次）；先 CTRL=0x2
+  停表、再 EOI 清残留 pending 后计数稳定 ✓
+- S4 最终断言含 IntStatus==0 复核 ✓
+
+## 4. 仿真实证（run6，UVM_CASE_PASS）
+
+```
+S1: CLIC vector table at 0xa000, mtvt installed
+S2a diag: mtvec = 0x83 (mode bits expect 11)
+S2 diag: CLICINTIE[16-19] word readback = 0x100
+S2 diag: mstatus = 0x1808 (bit3 mie expect 1)
+S3 pass: CPU entered ISR 4 times
+S3 observation: mcause=0xb8000011 mepc=0x28b6   ← bit31=1 中断 + ID=17
+S4 pass: ISR stopped after TIM1 EOI
+```
